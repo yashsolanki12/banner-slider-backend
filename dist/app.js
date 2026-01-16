@@ -15,7 +15,7 @@ app.use(express.json());
 app.use(cookieParse());
 app.use(express.urlencoded({ extended: true }));
 // Routes
-app.use("/api/review-slider", reviewSliderRoutes);
+app.use("/api/banner-slider", reviewSliderRoutes);
 // Global Error Handler
 app.use(errorHandler);
 // Handle 404 - This must be after all other routes
