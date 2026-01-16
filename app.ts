@@ -5,7 +5,7 @@ import cookieParse from "cookie-parser";
 import { connectDB } from "./config/db.js";
 import { errorHandler } from "./middleware/error-handler.js";
 import { StatusCode } from "./utils/status-code.js";
-import reviewSliderRoutes from "./router/review-slider.routes.js";
+import bannerSliderRoutes from "./router/banner-slider.routes.js";
 
 const app = express();
 
@@ -21,7 +21,7 @@ app.use(cookieParse());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
-app.use("/api/banner-slider", reviewSliderRoutes);
+app.use("/api/banner-slider", bannerSliderRoutes);
 
 // Global Error Handler
 app.use(errorHandler);
