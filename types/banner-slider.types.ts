@@ -1,6 +1,6 @@
 import { Document } from "mongoose";
 
-export interface ReviewSliderDocument extends Document {
+export interface BannerSliderDocument extends Document {
     title: string;
     description: string;
 }
