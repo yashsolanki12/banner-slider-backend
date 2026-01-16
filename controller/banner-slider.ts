@@ -1,11 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 import { StatusCode } from "../utils/status-code.js";
 import { ApiResponse } from "../utils/api-response.js";
-import * as reviewSliderService from "../service/review-slider.js";
+import * as bannerSliderService from "../service/banner-slider.js";
 import mongoose from "mongoose";
 
 // Create
-export const createReviewSlider = async (
+export const createBannerSlider = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -19,7 +19,7 @@ export const createReviewSlider = async (
         .json(new ApiResponse(false, "Title, description are required."));
     }
 
-    const response = await reviewSliderService.createReview({
+    const response = await bannerSliderService.createBanner({
       title,
       description,
     });
@@ -27,13 +27,13 @@ export const createReviewSlider = async (
     if (!response) {
       return res
         .status(StatusCode.BAD_REQUEST)
-        .json(new ApiResponse(false, "Failed to create new review slider."));
+        .json(new ApiResponse(false, "Failed to create new banner slider."));
     }
     if (response) {
       return res
         .status(StatusCode.CREATED)
         .json(
-          new ApiResponse(true, "Review slider created successfully.", response)
+          new ApiResponse(true, "Banner slider created successfully.", response)
         );
     }
   } catch (error) {
@@ -45,17 +45,17 @@ export const createReviewSlider = async (
 };
 
 // List
-export const getAllReviewSlider = async (
+export const getAllBannerSlider = async (
   _req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const response = await reviewSliderService.getAllReview();
+    const response = await bannerSliderService.getAllBanner();
     if (!response) {
       return res
         .status(StatusCode.OK)
-        .json(new ApiResponse(false, "No review slider found.", []));
+        .json(new ApiResponse(false, "No banner slider found.", []));
     }
     if (response) {
       return res
@@ -63,7 +63,7 @@ export const getAllReviewSlider = async (
         .json(
           new ApiResponse(
             true,
-            "Review slider retrieved successfully",
+            "Banner slider retrieved successfully",
             response
           )
         );
@@ -77,7 +77,7 @@ export const getAllReviewSlider = async (
 };
 
 // Detail
-export const getReviewSliderById = async (
+export const getBannerSliderById = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -88,14 +88,14 @@ export const getReviewSliderById = async (
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res
         .status(StatusCode.BAD_REQUEST)
-        .json(new ApiResponse(false, "Invalid review slider ID format."));
+        .json(new ApiResponse(false, "Invalid banner slider ID format."));
     }
 
-    const response = await reviewSliderService.getReviewById(id);
+    const response = await bannerSliderService.getBannerById(id);
     if (!response) {
       return res
         .status(StatusCode.NOT_FOUND)
-        .json(new ApiResponse(false, "Review slider not found."));
+        .json(new ApiResponse(false, "Banner slider not found."));
     }
     if (response) {
       return res
@@ -103,7 +103,7 @@ export const getReviewSliderById = async (
         .json(
           new ApiResponse(
             true,
-            "Review slider retrieved successfully.",
+            "Banner slider retrieved successfully.",
             response
           )
         );
@@ -117,7 +117,7 @@ export const getReviewSliderById = async (
 };
 
 // Update
-export const updateReviewSliderById = async (
+export const updateBannerSliderById = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -129,7 +129,7 @@ export const updateReviewSliderById = async (
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res
         .status(StatusCode.BAD_REQUEST)
-        .json(new ApiResponse(false, "Invalid review slider ID format."));
+        .json(new ApiResponse(false, "Invalid banner slider ID format."));
     }
     if (!title || !description) {
       return res
@@ -137,19 +137,21 @@ export const updateReviewSliderById = async (
         .json(new ApiResponse(false, "Title, description are required."));
     }
 
-    const response = await reviewSliderService.updateReviewById(id, {
+    const response = await bannerSliderService.updateBannerById(id, {
       title,
       description,
     });
     if (!response) {
       return res
         .status(StatusCode.NOT_FOUND)
-        .json(new ApiResponse(false, "Review slider not found."));
+        .json(new ApiResponse(false, "Banner slider not found."));
     }
     if (response) {
       return res
         .status(StatusCode.OK)
-        .json(new ApiResponse(true, "Review slider updated successfully."));
+        .json(
+          new ApiResponse(true, "Banner slider updated successfully.", response)
+        );
     }
   } catch (error) {
     next(error);
@@ -160,7 +162,7 @@ export const updateReviewSliderById = async (
 };
 
 // Delete
-export const deleteReviewSliderById = async (
+export const deleteBannerSliderById = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -171,19 +173,19 @@ export const deleteReviewSliderById = async (
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res
         .status(StatusCode.BAD_REQUEST)
-        .json(new ApiResponse(false, "Invalid review slider ID format."));
+        .json(new ApiResponse(false, "Invalid banner slider ID format."));
     }
-    const response = reviewSliderService.deleteReviewById(id);
+    const response = bannerSliderService.deleteBannerById(id);
     if (!response) {
       return res
         .status(StatusCode.NOT_FOUND)
-        .json(new ApiResponse(false, "Review slider not found."));
+        .json(new ApiResponse(false, "Banner slider not found."));
     }
     if (response) {
       return res
         .status(StatusCode.OK)
         .json(
-          new ApiResponse(true, "Review slider deleted successfully.", response)
+          new ApiResponse(true, "Banner slider deleted successfully.", response)
         );
     }
   } catch (error) {
