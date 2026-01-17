@@ -3,12 +3,53 @@ import { StatusCode } from "../utils/status-code.js";
 import { ApiResponse } from "../utils/api-response.js";
 import * as bannerSliderService from "../service/banner-slider.js";
 import mongoose from "mongoose";
+import shopifySession from "../models/shopify-session.js";
+
+// Get current shopify_session_id
+export const getCurrentShopifySessionId = async (
+  req: Request,
+  res: Response,
+) => {
+  try {
+    const shopDomain = req.headers["x-shopify-shop-domain"] as string;
+    console.log("🔑 getCurrentShopifySessionId - Shop domain:", shopDomain);
+
+    if (!shopDomain) {
+      console.log("❌ Missing shop domain header in session request");
+      return res
+        .status(StatusCode.BAD_REQUEST)
+        .json(new ApiResponse(false, "Missing shop domain header."));
+    }
+
+    const sessionDoc = await mongoose.connection
+      .collection("shopify_sessions")
+      .findOne({ shop: shopDomain });
+
+    console.log("🔍 Session document found:", sessionDoc ? "Yes" : "No");
+
+    if (!sessionDoc || !sessionDoc._id) {
+      console.log("❌ Session not found for shop:", shopDomain);
+      return res
+        .status(StatusCode.NOT_FOUND)
+        .json(new ApiResponse(false, "Session not found."));
+    }
+    if (sessionDoc) {
+      console.log("✅ Session found successfully");
+      return res.json({ success: true, session: sessionDoc });
+    }
+  } catch (error) {
+    console.error("❌ Error in getCurrentShopifySessionId:", error);
+    return res
+      .status(StatusCode.INTERNAL_SERVER_ERROR)
+      .json(new ApiResponse(false, "Internal server error"));
+  }
+};
 
 // Create
 export const createBannerSlider = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const { title, description } = req.body;
@@ -33,7 +74,11 @@ export const createBannerSlider = async (
       return res
         .status(StatusCode.CREATED)
         .json(
-          new ApiResponse(true, "Banner slider created successfully.", response)
+          new ApiResponse(
+            true,
+            "Banner slider created successfully.",
+            response,
+          ),
         );
     }
   } catch (error) {
@@ -48,7 +93,7 @@ export const createBannerSlider = async (
 export const getAllBannerSlider = async (
   _req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const response = await bannerSliderService.getAllBanner();
@@ -64,8 +109,8 @@ export const getAllBannerSlider = async (
           new ApiResponse(
             true,
             "Banner slider retrieved successfully",
-            response
-          )
+            response,
+          ),
         );
     }
   } catch (error) {
@@ -80,7 +125,7 @@ export const getAllBannerSlider = async (
 export const getBannerSliderById = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const { id } = req.params;
@@ -104,8 +149,8 @@ export const getBannerSliderById = async (
           new ApiResponse(
             true,
             "Banner slider retrieved successfully.",
-            response
-          )
+            response,
+          ),
         );
     }
   } catch (error) {
@@ -120,7 +165,7 @@ export const getBannerSliderById = async (
 export const updateBannerSliderById = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const { id } = req.params;
@@ -150,7 +195,11 @@ export const updateBannerSliderById = async (
       return res
         .status(StatusCode.OK)
         .json(
-          new ApiResponse(true, "Banner slider updated successfully.", response)
+          new ApiResponse(
+            true,
+            "Banner slider updated successfully.",
+            response,
+          ),
         );
     }
   } catch (error) {
@@ -165,7 +214,7 @@ export const updateBannerSliderById = async (
 export const deleteBannerSliderById = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const { id } = req.params;
@@ -185,7 +234,11 @@ export const deleteBannerSliderById = async (
       return res
         .status(StatusCode.OK)
         .json(
-          new ApiResponse(true, "Banner slider deleted successfully.", response)
+          new ApiResponse(
+            true,
+            "Banner slider deleted successfully.",
+            response,
+          ),
         );
     }
   } catch (error) {
@@ -195,3 +248,113 @@ export const deleteBannerSliderById = async (
       .json(new ApiResponse(false, "Internal Server Error"));
   }
 };
+
+// Handle GET, POST, DELETE for /api/phone/offline_{shop}
+export const handleOfflineSession = async (req: Request, res: Response) => {
+  const shopParam = req.params.shop;
+  const shop = shopParam?.replace(/^offline_/, "");
+  if (!shop) {
+    return res
+      .status(StatusCode.BAD_REQUEST)
+      .json(new ApiResponse(false, "Missing shop domain in URL."));
+  }
+  try {
+    if (req.method === "GET") {
+      // Find session by shop domain
+      const session = await shopifySession.findOne({ shop });
+      if (!session) {
+        return res
+          .status(StatusCode.NOT_FOUND)
+          .json(new ApiResponse(false, "Session not found."));
+      }
+      return res.status(StatusCode.OK).json(session);
+    } else if (req.method === "POST") {
+      // Upsert session by shop domain
+      const data = req.body;
+      if (!data || !data.id || !data.shop) {
+        return res
+          .status(StatusCode.BAD_REQUEST)
+          .json(new ApiResponse(false, "Missing session data (id, shop)."));
+      }
+      const updated = await shopifySession.findOneAndUpdate(
+        { shop: data.shop },
+        { $set: data },
+        { upsert: true, new: true }
+      );
+      return res.status(StatusCode.OK).json(updated);
+    } else if (req.method === "DELETE") {
+      // Delete session by shop domain
+      const deleted = await shopifySession.findOneAndDelete({ shop });
+      if (!deleted) {
+        return res
+          .status(StatusCode.NOT_FOUND)
+          .json(new ApiResponse(false, "Session not found to delete."));
+      }
+      return res
+        .status(StatusCode.OK)
+        .json(new ApiResponse(true, "Session deleted.", deleted));
+    } else {
+      return res
+        .status(StatusCode.BAD_REQUEST)
+        .json(new ApiResponse(false, "Unsupported method."));
+    }
+  } catch (error) {
+    return res
+      .status(StatusCode.INTERNAL_SERVER_ERROR)
+      .json(new ApiResponse(false, "Internal server error"));
+  }
+};
+
+// Handle GET, POST, DELETE for /api/phone/:id (Shopify session storage)
+export const handleSessionById = async (req: Request, res: Response) => {
+  const id = req.params.id;
+  // Only handle if id is NOT a valid ObjectId (to avoid conflict with phone routes)
+  if (mongoose.Types.ObjectId.isValid(id)) {
+    return res
+      .status(StatusCode.BAD_REQUEST)
+      .json(new ApiResponse(false, "Not a session id route."));
+  }
+  try {
+    if (req.method === "GET") {
+      const session = await shopifySession.findOne({ id });
+      if (!session) {
+        return res
+          .status(StatusCode.NOT_FOUND)
+          .json(new ApiResponse(false, "Session not found."));
+      }
+      return res.status(StatusCode.OK).json(session);
+    } else if (req.method === "POST") {
+      const data = req.body;
+      if (!data || !data.id || !data.shop) {
+        return res
+          .status(StatusCode.BAD_REQUEST)
+          .json(new ApiResponse(false, "Missing session data (id, shop)"));
+      }
+      const updated = await shopifySession.findOneAndUpdate(
+        { id: data.id },
+        { $set: data },
+        { upsert: true, new: true }
+      );
+      return res.status(StatusCode.OK).json(updated);
+    } else if (req.method === "DELETE") {
+      const deleted = await shopifySession.findOneAndDelete({ id });
+      if (!deleted) {
+        return res
+          .status(StatusCode.NOT_FOUND)
+          .json(new ApiResponse(false, "Session not found to delete."));
+      }
+      return res
+        .status(StatusCode.OK)
+        .json(new ApiResponse(true, "Session deleted.", deleted));
+    } else {
+      return res
+        .status(StatusCode.BAD_REQUEST)
+        .json(new ApiResponse(false, "Unsupported method."));
+    }
+  } catch (error) {
+    return res
+      .status(StatusCode.INTERNAL_SERVER_ERROR)
+      .json(new ApiResponse(false, "Internal server error"));
+  }
+};
+
