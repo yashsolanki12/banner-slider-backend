@@ -1,16 +1,7 @@
-// Dynamic allowed origin checker
-// Handles CORS for Shopify domains to prevent:
-// "Missing CORS headers: Your backend wasn't configured to allow requests from the Shopify domain"
 export function isAllowedOrigin(origin, reqMethod) {
     if (!origin)
         return true;
     if (reqMethod && reqMethod.toUpperCase() === "OPTIONS")
-        return true;
-    // Define only specific trusted domains
-    const allowedOrigins = [
-        "https://whatsup.ecodesoft.net",
-    ];
-    if (allowedOrigins.includes(origin))
         return true;
     // Shopify-specific domain patterns
     if (/https?:\/\/([\w.-]+)\.myshopify\.com$/.test(origin))

@@ -5,13 +5,18 @@ const bannerSliderSchema = new Schema<BannerSliderDocument>(
   {
     title: { type: String, required: true },
     description: { type: String, required: true },
+    shopify_session_id: {
+      type: Schema.Types.ObjectId,
+      ref: "ShopifySession",
+      required: true,
+    },
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 export const BannerSlider = model<BannerSliderDocument>(
   "BannerSlider",
-  bannerSliderSchema
+  bannerSliderSchema,
 );
