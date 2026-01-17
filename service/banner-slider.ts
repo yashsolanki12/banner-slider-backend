@@ -1,5 +1,6 @@
 import { BannerSliderDocument } from "../types/banner-slider.types.js";
 import { BannerSlider } from "../models/banner-slider.js";
+import mongoose from "mongoose";
 
 // Create new banner slider
 export const createBanner = async (
@@ -12,8 +13,12 @@ export const createBanner = async (
 };
 
 // Get all banner slider
-export const getAllBanner = async (): Promise<BannerSliderDocument[]> => {
-  return await BannerSlider.find().sort({ createdAt: -1 });
+export const getAllBanner = async (filter: Partial<BannerSliderDocument> = {}): Promise<BannerSliderDocument[]> => {
+  const mongoFilter: any = {...filter};
+  if(mongoFilter.shopify_session_id) {
+    mongoFilter.shopify_session_id = new mongoose.Types.ObjectId(mongoFilter.shopify_session_id as any)
+  }
+  return await BannerSlider.find(mongoFilter).sort({ createdAt: -1 });
 };
 
 // Get by id

@@ -6,10 +6,30 @@ import {
   deleteBannerSliderById,
   getAllBannerSlider,
   getBannerSliderById,
+  getCurrentShopifySessionId,
+  handleOfflineSession,
+  handleSessionById,
   updateBannerSliderById,
 } from "../controller/banner-slider.js";
 
 const router = Router();
+
+// / get current shopify_session_id for frontend
+router.get("/session/current", getCurrentShopifySessionId);
+
+// Shopify session storage endpoints for offline_{shop} (must be above :id route)
+router
+  .route("/offline_:shop")
+  .get(handleOfflineSession)
+  .post(handleOfflineSession)
+  .delete(handleOfflineSession);
+
+// Shopify session storage endpoint
+router
+  .route("/session/:id")
+  .get(handleSessionById)
+  .post(handleSessionById)
+  .delete(handleSessionById);
 
 // Create
 router.post("/add", validate(bannerSliderSchema), createBannerSlider);
