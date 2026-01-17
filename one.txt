@@ -1,7 +1,0 @@
-# Backend Port
-PORT=4000
-
-# MongoDB Connection
-MONGODB_URL="mongodb+srv://yashsolanki1622_db_user:MVjAjuulqsJsZac9@cluster0.w5tcqmf.mongodb.net/"
-DB_NAME="review-slider"
-JWT_SECRET="z+6Fxv2/SjdjQpE9anvSovFOSIBWWsPMDmAIg+b/z3g="
