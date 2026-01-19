@@ -52,17 +52,23 @@ export const createBannerSlider = async (
   next: NextFunction,
 ) => {
   try {
-    const { title, description } = req.body;
+    const { title, description, shopify_session_id } = req.body;
 
-    if (!title || !description) {
+    if (!title || !description || !shopify_session_id) {
       return res
         .status(StatusCode.BAD_REQUEST)
-        .json(new ApiResponse(false, "Title, description are required."));
+        .json(
+          new ApiResponse(
+            false,
+            "Title, description and shopify_session_id are required.",
+          ),
+        );
     }
 
     const response = await bannerSliderService.createBanner({
       title,
       description,
+      shopify_session_id,
     });
 
     if (!response) {
@@ -279,7 +285,7 @@ export const handleOfflineSession = async (req: Request, res: Response) => {
       const updated = await shopifySession.findOneAndUpdate(
         { shop: data.shop },
         { $set: data },
-        { upsert: true, new: true }
+        { upsert: true, new: true },
       );
       return res.status(StatusCode.OK).json(updated);
     } else if (req.method === "DELETE") {
@@ -333,7 +339,7 @@ export const handleSessionById = async (req: Request, res: Response) => {
       const updated = await shopifySession.findOneAndUpdate(
         { id: data.id },
         { $set: data },
-        { upsert: true, new: true }
+        { upsert: true, new: true },
       );
       return res.status(StatusCode.OK).json(updated);
     } else if (req.method === "DELETE") {
@@ -357,4 +363,3 @@ export const handleSessionById = async (req: Request, res: Response) => {
       .json(new ApiResponse(false, "Internal server error"));
   }
 };
-
