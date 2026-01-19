@@ -4,11 +4,12 @@ import mongoose from "mongoose";
 
 // Create new banner slider
 export const createBanner = async (
-  data: Pick<BannerSliderDocument, "title" | "description">
+  data: Pick<BannerSliderDocument, "title" | "description" | "shopify_session_id">
 ): Promise<BannerSliderDocument> => {
   return await BannerSlider.create({
     title: data.title,
     description: data.description,
+    shopify_session_id: data.shopify_session_id
   });
 };
 
