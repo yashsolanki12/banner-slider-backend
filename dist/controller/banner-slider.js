@@ -39,15 +39,16 @@ export const getCurrentShopifySessionId = async (req, res) => {
 // Create
 export const createBannerSlider = async (req, res, next) => {
     try {
-        const { title, description } = req.body;
-        if (!title || !description) {
+        const { title, description, shopify_session_id } = req.body;
+        if (!title || !description || !shopify_session_id) {
             return res
                 .status(StatusCode.BAD_REQUEST)
-                .json(new ApiResponse(false, "Title, description are required."));
+                .json(new ApiResponse(false, "Title, description and shopify_session_id are required."));
         }
         const response = await bannerSliderService.createBanner({
             title,
             description,
+            shopify_session_id,
         });
         if (!response) {
             return res

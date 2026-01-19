@@ -5,6 +5,7 @@ export const createBanner = async (data) => {
     return await BannerSlider.create({
         title: data.title,
         description: data.description,
+        shopify_session_id: data.shopify_session_id
     });
 };
 // Get all banner slider
