@@ -3,6 +3,9 @@ export function isAllowedOrigin(origin, reqMethod) {
         return true;
     if (reqMethod && reqMethod.toUpperCase() === "OPTIONS")
         return true;
+    const allowedOrigins = ["https://banner-slider-web.onrender.com"];
+    if (allowedOrigins.includes(origin))
+        return true;
     // Shopify-specific domain patterns
     if (/https?:\/\/([\w.-]+)\.myshopify\.com$/.test(origin))
         return true; // Store domains
