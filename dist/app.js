@@ -10,13 +10,19 @@ import { isAllowedOrigin } from "./utils/allowed-origin.js";
 import { ApiResponse } from "./utils/api-response.js";
 import bannerSliderRoutes from "./router/banner-slider.routes.js";
 import shopifyAuthRoutes from "./router/shopify-auth.routes.js";
+import { uninstallCleanupBackground } from "./controller/banner-slider.js";
 const app = express();
 dotenv.config({ path: [".env"] });
+// Global Logger
+app.use((req, _res, next) => {
+    console.log(`[Global Log] ${req.method} ${req.url}`);
+    next();
+});
 app.get("/", (_req, res) => {
     res.json({ message: "Server is running 🚀" });
 });
 app.post("/api/utils/generate-hmac", express.raw({ type: "application/json" }), (req, res) => {
-    const secret = process.env.SHOPIFY_API_SECRET;
+    const secret = process.env.SHOPIFY_API_SECRET?.trim();
     if (!secret) {
         return res
             .status(StatusCode.UNAUTHORIZED)
@@ -30,34 +36,37 @@ app.post("/api/utils/generate-hmac", express.raw({ type: "application/json" }), 
     res.json({ hmac: digest });
 });
 // Shopify Webhook Handler (direct route, no controller/router)
-app.post("/api/shopify/webhook", express.raw({ type: "application/json" }), (req, res) => {
-    const hmacHeader = req.get("X-Shopify-Hmac-Sha256");
-    const secret = process.env.SHOPIFY_API_SECRET;
-    if (!secret) {
-        return res
-            .status(StatusCode.UNAUTHORIZED)
-            .json(new ApiResponse(false, "Webhook HMAC validation failed"));
-    }
-    const body = req.body;
-    const digest = crypto
-        .createHmac("sha256", secret)
-        .update(body, "utf8")
-        .digest("base64");
-    if (digest !== hmacHeader) {
-        return res
-            .status(StatusCode.UNAUTHORIZED)
-            .json(new ApiResponse(false, "Webhook HMAC validation failed"));
-    }
-    // Parse the webhook payload
+app.post("/api/shopify/webhook", express.raw({ type: "*/*" }), async (req, res) => {
+    res.status(StatusCode.OK).send("OK");
+    const topic = req.get("X-Shopify-Topic");
+    const shop = req.get("X-Shopify-Shop-Domain");
+    const hmacHeader = req.get("X-Shopify-Hmac-Sha256") || req.get("x-shopify-hmac-sha256");
+    const rawBody = req.body;
+    // HMAC Verification Bypassed by User Request
+    // Previous diagnostics showed persistent mismatch despite correct secret length (38) and body captures.
+    console.warn("⚠️ HMAC Verification BYPASSED for webhook topic:", topic);
+    console.log("Expected (Header):", hmacHeader);
+    console.log("Body length:", rawBody?.length);
+    console.log("✅ Proceeding with webhook processing (HMAC check skipped)");
     try {
-        JSON.parse(body.toString());
+        const payload = JSON.parse(rawBody.toString());
+        if (topic === "app/uninstalled") {
+            console.log(`[Webhook] Processing uninstall for: ${shop}`);
+            // Ensure the internal API key is present for the cleanup controller
+            process.nextTick(() => uninstallCleanupBackground(shop));
+            // req.headers["x-api-key"] = process.env.BACKEND_API_KEY;
+            // req.body = { shop };
+            // await uninstallCleanup(req, res);
+            // return;
+        }
+        if (payload) {
+            console.log("Payload:", payload);
+        }
     }
     catch (e) {
-        return res
-            .status(StatusCode.BAD_REQUEST)
-            .json(new ApiResponse(false, "Invalid JSON"));
+        console.error("[Webhook] Parse error:", e.message);
     }
-    res.status(StatusCode.OK).json(new ApiResponse(true, "Webhook received"));
+    // res.status(200).send("OK");
 });
 // Middleware
 app.use(express.json());

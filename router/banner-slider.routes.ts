@@ -9,6 +9,7 @@ import {
   getCurrentShopifySessionId,
   handleOfflineSession,
   handleSessionById,
+  uninstallCleanup,
   updateBannerSliderById,
 } from "../controller/banner-slider.js";
 
@@ -45,5 +46,8 @@ router.put("/:id", validate(bannerSliderSchema), updateBannerSliderById);
 
 // Delete
 router.delete("/:id", deleteBannerSliderById);
+
+// POST uninstall-cleanup to null the shop access token
+router.post("/uninstall-cleanup", uninstallCleanup);
 
 export default router;

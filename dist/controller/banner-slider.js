@@ -290,4 +290,69 @@ export const handleSessionById = async (req, res) => {
             .json(new ApiResponse(false, "Internal server error"));
     }
 };
+// This function runs in the background and only needs the 'shop' domain.
+export const uninstallCleanupBackground = async (shop) => {
+    try {
+        // No apiKey check needed here as it's an internal background process.
+        if (!shop) {
+            console.warn("[uninstallCleanupBackground] Missing shop domain.");
+            return;
+        }
+        // Perform your database operations:
+        const sessionDoc = await mongoose.connection
+            .collection("shopify_sessions")
+            .findOne({ shop });
+        if (!sessionDoc) {
+            console.log(`[uninstallCleanupBackground] No session found for shop: ${shop}`);
+            return;
+        }
+        await mongoose.connection
+            .collection("shopify_sessions")
+            .updateOne({ shop }, { $set: { accessToken: null } });
+        console.log(`[uninstallCleanupBackground] Access token nulled for shop: ${shop}`);
+    }
+    catch (error) {
+        console.error("❌ Error in uninstallCleanupBackground:", error);
+    }
+};
+// Uninstall cleanup: set accessToken to null for a shop instead of deleting records
+export const uninstallCleanup = async (req, res) => {
+    try {
+        const apiKey = req.headers["x-api-key"];
+        if (apiKey !== process.env.BACKEND_API_KEY) {
+            console.warn("⚠️ Unauthorized uninstallCleanup attempt from IP:", req.ip);
+            return res.status(401).json({ success: false, message: "Unauthorized" });
+        }
+        const { shop } = req.body;
+        if (!shop) {
+            return res
+                .status(StatusCode.BAD_REQUEST)
+                .json(new ApiResponse(false, "Missing shop domain."));
+        }
+        // Find the session for this shop
+        const sessionDoc = await mongoose.connection
+            .collection("shopify_sessions")
+            .findOne({ shop });
+        if (!sessionDoc) {
+            console.log(`[uninstallCleanup] No session found for shop: ${shop}`);
+            return res
+                .status(StatusCode.OK)
+                .json(new ApiResponse(true, "No session to update."));
+        }
+        // Update only the accessToken to null to persist other data
+        await mongoose.connection
+            .collection("shopify_sessions")
+            .updateOne({ shop }, { $set: { accessToken: null } });
+        console.log(`[uninstallCleanup] Access token nulled for shop: ${shop}`);
+        return res
+            .status(StatusCode.OK)
+            .json(new ApiResponse(true, "Session access token preserved as null."));
+    }
+    catch (error) {
+        console.error("❌ Error in uninstallCleanup:", error);
+        return res
+            .status(StatusCode.INTERNAL_SERVER_ERROR)
+            .json(new ApiResponse(false, "Internal server error"));
+    }
+};
 //# sourceMappingURL=banner-slider.js.map
