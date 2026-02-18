@@ -1,7 +1,7 @@
-import { BannerSliderDocument } from "../types/banner-slider.types";
+import { UspSliderDocument } from "../types/usp-slider.types";
 import { Schema, model } from "mongoose";
 
-const bannerSliderSchema = new Schema<BannerSliderDocument>(
+const uspSliderSchema = new Schema<UspSliderDocument>(
   {
     title: { type: String, required: true },
     description: { type: String, required: true },
@@ -16,7 +16,7 @@ const bannerSliderSchema = new Schema<BannerSliderDocument>(
   },
 );
 
-export const BannerSlider = model<BannerSliderDocument>(
-  "BannerSlider",
-  bannerSliderSchema,
+export const UspSlider = model<UspSliderDocument>(
+  "UspSlider",
+  uspSliderSchema,
 );

@@ -1,6 +1,6 @@
 import { StatusCode } from "../utils/status-code.js";
 import { ApiResponse } from "../utils/api-response.js";
-import * as bannerSliderService from "../service/banner-slider.js";
+import * as uspSliderService from "../service/usp-slider.js";
 import mongoose from "mongoose";
 import shopifySession from "../models/shopify-session.js";
 // Get current shopify_session_id
@@ -37,7 +37,7 @@ export const getCurrentShopifySessionId = async (req, res) => {
     }
 };
 // Create
-export const createBannerSlider = async (req, res, next) => {
+export const createUspSlider = async (req, res, next) => {
     try {
         const { title, description, shopify_session_id } = req.body;
         if (!title || !description || !shopify_session_id) {
@@ -45,7 +45,7 @@ export const createBannerSlider = async (req, res, next) => {
                 .status(StatusCode.BAD_REQUEST)
                 .json(new ApiResponse(false, "Title, description and shopify_session_id are required."));
         }
-        const response = await bannerSliderService.createBanner({
+        const response = await uspSliderService.createUsp({
             title,
             description,
             shopify_session_id,
@@ -53,12 +53,12 @@ export const createBannerSlider = async (req, res, next) => {
         if (!response) {
             return res
                 .status(StatusCode.BAD_REQUEST)
-                .json(new ApiResponse(false, "Failed to create new banner slider."));
+                .json(new ApiResponse(false, "Failed to create new usp slider."));
         }
         if (response) {
             return res
                 .status(StatusCode.CREATED)
-                .json(new ApiResponse(true, "Banner slider created successfully.", response));
+                .json(new ApiResponse(true, "Usp slider created successfully.", response));
         }
     }
     catch (error) {
@@ -69,18 +69,18 @@ export const createBannerSlider = async (req, res, next) => {
     }
 };
 // List
-export const getAllBannerSlider = async (_req, res, next) => {
+export const getAllUspSlider = async (_req, res, next) => {
     try {
-        const response = await bannerSliderService.getAllBanner();
+        const response = await uspSliderService.getAllUsp();
         if (!response) {
             return res
                 .status(StatusCode.OK)
-                .json(new ApiResponse(false, "No banner slider found.", []));
+                .json(new ApiResponse(false, "No usp slider found.", []));
         }
         if (response) {
             return res
                 .status(StatusCode.OK)
-                .json(new ApiResponse(true, "Banner slider retrieved successfully", response));
+                .json(new ApiResponse(true, "Usp slider retrieved successfully", response));
         }
     }
     catch (error) {
@@ -91,24 +91,24 @@ export const getAllBannerSlider = async (_req, res, next) => {
     }
 };
 // Detail
-export const getBannerSliderById = async (req, res, next) => {
+export const getUspSliderById = async (req, res, next) => {
     try {
         const { id } = req.params;
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return res
                 .status(StatusCode.BAD_REQUEST)
-                .json(new ApiResponse(false, "Invalid banner slider ID format."));
+                .json(new ApiResponse(false, "Invalid usp slider ID format."));
         }
-        const response = await bannerSliderService.getBannerById(id);
+        const response = await uspSliderService.getUspById(id);
         if (!response) {
             return res
                 .status(StatusCode.NOT_FOUND)
-                .json(new ApiResponse(false, "Banner slider not found."));
+                .json(new ApiResponse(false, "Usp slider not found."));
         }
         if (response) {
             return res
                 .status(StatusCode.OK)
-                .json(new ApiResponse(true, "Banner slider retrieved successfully.", response));
+                .json(new ApiResponse(true, "Usp slider retrieved successfully.", response));
         }
     }
     catch (error) {
@@ -119,33 +119,33 @@ export const getBannerSliderById = async (req, res, next) => {
     }
 };
 // Update
-export const updateBannerSliderById = async (req, res, next) => {
+export const updateUspSliderById = async (req, res, next) => {
     try {
         const { id } = req.params;
         const { title, description } = req.body;
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return res
                 .status(StatusCode.BAD_REQUEST)
-                .json(new ApiResponse(false, "Invalid banner slider ID format."));
+                .json(new ApiResponse(false, "Invalid usp slider ID format."));
         }
         if (!title || !description) {
             return res
                 .status(StatusCode.BAD_REQUEST)
                 .json(new ApiResponse(false, "Title, description are required."));
         }
-        const response = await bannerSliderService.updateBannerById(id, {
+        const response = await uspSliderService.updateUspById(id, {
             title,
             description,
         });
         if (!response) {
             return res
                 .status(StatusCode.NOT_FOUND)
-                .json(new ApiResponse(false, "Banner slider not found."));
+                .json(new ApiResponse(false, "Usp slider not found."));
         }
         if (response) {
             return res
                 .status(StatusCode.OK)
-                .json(new ApiResponse(true, "Banner slider updated successfully.", response));
+                .json(new ApiResponse(true, "Usp slider updated successfully.", response));
         }
     }
     catch (error) {
@@ -156,24 +156,24 @@ export const updateBannerSliderById = async (req, res, next) => {
     }
 };
 // Delete
-export const deleteBannerSliderById = async (req, res, next) => {
+export const deleteUspSliderById = async (req, res, next) => {
     try {
         const { id } = req.params;
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return res
                 .status(StatusCode.BAD_REQUEST)
-                .json(new ApiResponse(false, "Invalid banner slider ID format."));
+                .json(new ApiResponse(false, "Invalid usp slider ID format."));
         }
-        const response = bannerSliderService.deleteBannerById(id);
+        const response = uspSliderService.deleteUspById(id);
         if (!response) {
             return res
                 .status(StatusCode.NOT_FOUND)
-                .json(new ApiResponse(false, "Banner slider not found."));
+                .json(new ApiResponse(false, "Usp slider not found."));
         }
         if (response) {
             return res
                 .status(StatusCode.OK)
-                .json(new ApiResponse(true, "Banner slider deleted successfully.", response));
+                .json(new ApiResponse(true, "Usp slider deleted successfully.", response));
         }
     }
     catch (error) {
@@ -355,4 +355,4 @@ export const uninstallCleanup = async (req, res) => {
             .json(new ApiResponse(false, "Internal server error"));
     }
 };
-//# sourceMappingURL=banner-slider.js.map
+//# sourceMappingURL=usp-slider.js.map

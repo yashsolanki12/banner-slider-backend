@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { StatusCode } from "../utils/status-code.js";
 import { ApiResponse } from "../utils/api-response.js";
-import * as bannerSliderService from "../service/banner-slider.js";
+import * as uspSliderService from "../service/usp-slider.js";
 import mongoose from "mongoose";
 import shopifySession from "../models/shopify-session.js";
 
@@ -46,7 +46,7 @@ export const getCurrentShopifySessionId = async (
 };
 
 // Create
-export const createBannerSlider = async (
+export const createUspSlider = async (
   req: Request,
   res: Response,
   next: NextFunction,
@@ -65,7 +65,7 @@ export const createBannerSlider = async (
         );
     }
 
-    const response = await bannerSliderService.createBanner({
+    const response = await uspSliderService.createUsp({
       title,
       description,
       shopify_session_id,
@@ -74,7 +74,7 @@ export const createBannerSlider = async (
     if (!response) {
       return res
         .status(StatusCode.BAD_REQUEST)
-        .json(new ApiResponse(false, "Failed to create new banner slider."));
+        .json(new ApiResponse(false, "Failed to create new usp slider."));
     }
     if (response) {
       return res
@@ -82,7 +82,7 @@ export const createBannerSlider = async (
         .json(
           new ApiResponse(
             true,
-            "Banner slider created successfully.",
+            "Usp slider created successfully.",
             response,
           ),
         );
@@ -96,17 +96,17 @@ export const createBannerSlider = async (
 };
 
 // List
-export const getAllBannerSlider = async (
+export const getAllUspSlider = async (
   _req: Request,
   res: Response,
   next: NextFunction,
 ) => {
   try {
-    const response = await bannerSliderService.getAllBanner();
+    const response = await uspSliderService.getAllUsp();
     if (!response) {
       return res
         .status(StatusCode.OK)
-        .json(new ApiResponse(false, "No banner slider found.", []));
+        .json(new ApiResponse(false, "No usp slider found.", []));
     }
     if (response) {
       return res
@@ -114,7 +114,7 @@ export const getAllBannerSlider = async (
         .json(
           new ApiResponse(
             true,
-            "Banner slider retrieved successfully",
+            "Usp slider retrieved successfully",
             response,
           ),
         );
@@ -128,7 +128,7 @@ export const getAllBannerSlider = async (
 };
 
 // Detail
-export const getBannerSliderById = async (
+export const getUspSliderById = async (
   req: Request,
   res: Response,
   next: NextFunction,
@@ -139,14 +139,14 @@ export const getBannerSliderById = async (
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res
         .status(StatusCode.BAD_REQUEST)
-        .json(new ApiResponse(false, "Invalid banner slider ID format."));
+        .json(new ApiResponse(false, "Invalid usp slider ID format."));
     }
 
-    const response = await bannerSliderService.getBannerById(id);
+    const response = await uspSliderService.getUspById(id);
     if (!response) {
       return res
         .status(StatusCode.NOT_FOUND)
-        .json(new ApiResponse(false, "Banner slider not found."));
+        .json(new ApiResponse(false, "Usp slider not found."));
     }
     if (response) {
       return res
@@ -154,7 +154,7 @@ export const getBannerSliderById = async (
         .json(
           new ApiResponse(
             true,
-            "Banner slider retrieved successfully.",
+            "Usp slider retrieved successfully.",
             response,
           ),
         );
@@ -168,7 +168,7 @@ export const getBannerSliderById = async (
 };
 
 // Update
-export const updateBannerSliderById = async (
+export const updateUspSliderById = async (
   req: Request,
   res: Response,
   next: NextFunction,
@@ -180,7 +180,7 @@ export const updateBannerSliderById = async (
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res
         .status(StatusCode.BAD_REQUEST)
-        .json(new ApiResponse(false, "Invalid banner slider ID format."));
+        .json(new ApiResponse(false, "Invalid usp slider ID format."));
     }
     if (!title || !description) {
       return res
@@ -188,14 +188,14 @@ export const updateBannerSliderById = async (
         .json(new ApiResponse(false, "Title, description are required."));
     }
 
-    const response = await bannerSliderService.updateBannerById(id, {
+    const response = await uspSliderService.updateUspById(id, {
       title,
       description,
     });
     if (!response) {
       return res
         .status(StatusCode.NOT_FOUND)
-        .json(new ApiResponse(false, "Banner slider not found."));
+        .json(new ApiResponse(false, "Usp slider not found."));
     }
     if (response) {
       return res
@@ -203,7 +203,7 @@ export const updateBannerSliderById = async (
         .json(
           new ApiResponse(
             true,
-            "Banner slider updated successfully.",
+            "Usp slider updated successfully.",
             response,
           ),
         );
@@ -217,7 +217,7 @@ export const updateBannerSliderById = async (
 };
 
 // Delete
-export const deleteBannerSliderById = async (
+export const deleteUspSliderById = async (
   req: Request,
   res: Response,
   next: NextFunction,
@@ -228,13 +228,13 @@ export const deleteBannerSliderById = async (
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res
         .status(StatusCode.BAD_REQUEST)
-        .json(new ApiResponse(false, "Invalid banner slider ID format."));
+        .json(new ApiResponse(false, "Invalid usp slider ID format."));
     }
-    const response = bannerSliderService.deleteBannerById(id);
+    const response = uspSliderService.deleteUspById(id);
     if (!response) {
       return res
         .status(StatusCode.NOT_FOUND)
-        .json(new ApiResponse(false, "Banner slider not found."));
+        .json(new ApiResponse(false, "Usp slider not found."));
     }
     if (response) {
       return res
@@ -242,7 +242,7 @@ export const deleteBannerSliderById = async (
         .json(
           new ApiResponse(
             true,
-            "Banner slider deleted successfully.",
+            "Usp slider deleted successfully.",
             response,
           ),
         );

@@ -1,17 +1,17 @@
 import { Router } from "express";
 import { validate } from "../middleware/validate.js";
-import { bannerSliderSchema } from "../validation/banner-slider-validation.js";
+import { uspSliderSchema } from "../validation/usp-slider-validation.js";
 import {
-  createBannerSlider,
-  deleteBannerSliderById,
-  getAllBannerSlider,
-  getBannerSliderById,
+  createUspSlider,
+  deleteUspSliderById,
+  getAllUspSlider,
   getCurrentShopifySessionId,
+  getUspSliderById,
   handleOfflineSession,
   handleSessionById,
   uninstallCleanup,
-  updateBannerSliderById,
-} from "../controller/banner-slider.js";
+  updateUspSliderById,
+} from "../controller/usp-slider.js";
 
 const router = Router();
 
@@ -33,19 +33,19 @@ router
   .delete(handleSessionById);
 
 // Create
-router.post("/add", validate(bannerSliderSchema), createBannerSlider);
+router.post("/add", validate(uspSliderSchema), createUspSlider);
 
 // Get All
-router.get("/", getAllBannerSlider);
+router.get("/", getAllUspSlider);
 
 // Detail
-router.get("/:id", getBannerSliderById);
+router.get("/:id", getUspSliderById);
 
 // Update
-router.put("/:id", validate(bannerSliderSchema), updateBannerSliderById);
+router.put("/:id", validate(uspSliderSchema), updateUspSliderById);
 
 // Delete
-router.delete("/:id", deleteBannerSliderById);
+router.delete("/:id", deleteUspSliderById);
 
 // POST uninstall-cleanup to null the shop access token
 router.post("/uninstall-cleanup", uninstallCleanup);

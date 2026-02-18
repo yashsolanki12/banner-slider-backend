@@ -1,5 +1,5 @@
 import { Schema, model } from "mongoose";
-const bannerSliderSchema = new Schema({
+const uspSliderSchema = new Schema({
     title: { type: String, required: true },
     description: { type: String, required: true },
     shopify_session_id: {
@@ -10,5 +10,5 @@ const bannerSliderSchema = new Schema({
 }, {
     timestamps: true,
 });
-export const BannerSlider = model("BannerSlider", bannerSliderSchema);
-//# sourceMappingURL=banner-slider.js.map
+export const UspSlider = model("UspSlider", uspSliderSchema);
+//# sourceMappingURL=usp-slider.js.map
