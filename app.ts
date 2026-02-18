@@ -11,6 +11,7 @@ import { ApiResponse } from "./utils/api-response.js";
 import uspSliderRoutes from "./router/usp-slider.routes.js";
 import shopifyAuthRoutes from "./router/shopify-auth.routes.js";
 import { uninstallCleanupBackground } from "./controller/usp-slider.js";
+import { homePageHtml } from "./utils/home-page.js";
 
 const app = express();
 
@@ -23,7 +24,7 @@ app.use((req: any, _res, next) => {
 });
 
 app.get("/", (_req, res) => {
-  res.json({ message: "Server is running 🚀" });
+  res.send(homePageHtml);
 });
 
 app.post(
@@ -102,9 +103,9 @@ app.use(
     origin: (origin, callback) => {
       const reqMethod =
         typeof this !== "undefined" &&
-        this &&
-        (this as any).req &&
-        (this as any).req.method
+          this &&
+          (this as any).req &&
+          (this as any).req.method
           ? (this as any).req.method
           : undefined;
       if (isAllowedOrigin(origin, reqMethod)) {
