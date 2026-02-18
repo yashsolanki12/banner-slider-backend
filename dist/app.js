@@ -11,6 +11,7 @@ import { ApiResponse } from "./utils/api-response.js";
 import uspSliderRoutes from "./router/usp-slider.routes.js";
 import shopifyAuthRoutes from "./router/shopify-auth.routes.js";
 import { uninstallCleanupBackground } from "./controller/usp-slider.js";
+import { homePageHtml } from "./utils/home-page.js";
 const app = express();
 dotenv.config({ path: [".env"] });
 // Global Logger
@@ -19,7 +20,7 @@ app.use((req, _res, next) => {
     next();
 });
 app.get("/", (_req, res) => {
-    res.json({ message: "Server is running 🚀" });
+    res.send(homePageHtml);
 });
 app.post("/api/utils/generate-hmac", express.raw({ type: "application/json" }), (req, res) => {
     const secret = process.env.SHOPIFY_API_SECRET?.trim();
