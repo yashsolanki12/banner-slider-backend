@@ -1,5 +1,5 @@
 import { z } from "zod";
-export const bannerSliderSchema = z.object({
+export const uspSliderSchema = z.object({
     body: z.object({
         title: z.string().min(3, { message: "Title must be at least 3 character" }),
         description: z
@@ -7,4 +7,4 @@ export const bannerSliderSchema = z.object({
             .min(5, { message: "Description must be at least 5 character" }),
     }),
 });
-//# sourceMappingURL=banner-slider-validation.js.map
+//# sourceMappingURL=usp-slider-validation.js.map

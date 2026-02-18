@@ -8,9 +8,9 @@ import { errorHandler } from "./middleware/error-handler.js";
 import { StatusCode } from "./utils/status-code.js";
 import { isAllowedOrigin } from "./utils/allowed-origin.js";
 import { ApiResponse } from "./utils/api-response.js";
-import bannerSliderRoutes from "./router/banner-slider.routes.js";
+import uspSliderRoutes from "./router/usp-slider.routes.js";
 import shopifyAuthRoutes from "./router/shopify-auth.routes.js";
-import { uninstallCleanupBackground } from "./controller/banner-slider.js";
+import { uninstallCleanupBackground } from "./controller/usp-slider.js";
 
 const app = express();
 
@@ -119,7 +119,7 @@ app.use(
 );
 
 // Routes for banner slider
-app.use("/api/banner-slider", bannerSliderRoutes);
+app.use("/api/usp-slider", uspSliderRoutes);
 
 // Routes for shopify authentication
 app.use("/api/shopify", shopifyAuthRoutes);

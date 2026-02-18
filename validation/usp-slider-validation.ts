@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const bannerSliderSchema = z.object({
+export const uspSliderSchema = z.object({
   body: z.object({
     title: z.string().min(3, { message: "Title must be at least 3 character" }),
     description: z
