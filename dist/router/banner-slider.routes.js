@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { validate } from "../middleware/validate.js";
 import { bannerSliderSchema } from "../validation/banner-slider-validation.js";
-import { createBannerSlider, deleteBannerSliderById, getAllBannerSlider, getBannerSliderById, getCurrentShopifySessionId, handleOfflineSession, handleSessionById, updateBannerSliderById, } from "../controller/banner-slider.js";
+import { createBannerSlider, deleteBannerSliderById, getAllBannerSlider, getBannerSliderById, getCurrentShopifySessionId, handleOfflineSession, handleSessionById, uninstallCleanup, updateBannerSliderById, } from "../controller/banner-slider.js";
 const router = Router();
 // / get current shopify_session_id for frontend
 router.get("/session/current", getCurrentShopifySessionId);
@@ -27,5 +27,7 @@ router.get("/:id", getBannerSliderById);
 router.put("/:id", validate(bannerSliderSchema), updateBannerSliderById);
 // Delete
 router.delete("/:id", deleteBannerSliderById);
+// POST uninstall-cleanup to null the shop access token
+router.post("/uninstall-cleanup", uninstallCleanup);
 export default router;
 //# sourceMappingURL=banner-slider.routes.js.map
