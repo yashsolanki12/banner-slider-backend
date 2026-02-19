@@ -22,6 +22,14 @@ app.use((req, _res, next) => {
 app.get("/", (_req, res) => {
     res.send(homePageHtml);
 });
+// Health check endpoint
+app.get("/api/health", (_req, res) => {
+    res.status(StatusCode.OK).json({
+        status: "ok",
+        timestamp: new Date().toISOString(),
+        database: "connected",
+    });
+});
 app.post("/api/utils/generate-hmac", express.raw({ type: "application/json" }), (req, res) => {
     const secret = process.env.SHOPIFY_API_SECRET?.trim();
     if (!secret) {

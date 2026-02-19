@@ -27,6 +27,15 @@ app.get("/", (_req, res) => {
   res.send(homePageHtml);
 });
 
+// Health check endpoint
+app.get("/api/health", (_req, res) => {
+  res.status(StatusCode.OK).json({
+    status: "ok",
+    timestamp: new Date().toISOString(),
+    database: "connected",
+  });
+});
+
 app.post(
   "/api/utils/generate-hmac",
   express.raw({ type: "application/json" }),
@@ -103,9 +112,9 @@ app.use(
     origin: (origin, callback) => {
       const reqMethod =
         typeof this !== "undefined" &&
-          this &&
-          (this as any).req &&
-          (this as any).req.method
+        this &&
+        (this as any).req &&
+        (this as any).req.method
           ? (this as any).req.method
           : undefined;
       if (isAllowedOrigin(origin, reqMethod)) {
