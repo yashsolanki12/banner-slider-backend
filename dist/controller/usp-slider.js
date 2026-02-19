@@ -93,7 +93,7 @@ export const getAllUspSlider = async (_req, res, next) => {
 // Detail
 export const getUspSliderById = async (req, res, next) => {
     try {
-        const { id } = req.params;
+        const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return res
                 .status(StatusCode.BAD_REQUEST)
@@ -121,7 +121,7 @@ export const getUspSliderById = async (req, res, next) => {
 // Update
 export const updateUspSliderById = async (req, res, next) => {
     try {
-        const { id } = req.params;
+        const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
         const { title, description } = req.body;
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return res
@@ -158,13 +158,13 @@ export const updateUspSliderById = async (req, res, next) => {
 // Delete
 export const deleteUspSliderById = async (req, res, next) => {
     try {
-        const { id } = req.params;
+        const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return res
                 .status(StatusCode.BAD_REQUEST)
                 .json(new ApiResponse(false, "Invalid usp slider ID format."));
         }
-        const response = uspSliderService.deleteUspById(id);
+        const response = await uspSliderService.deleteUspById(id);
         if (!response) {
             return res
                 .status(StatusCode.NOT_FOUND)
@@ -185,7 +185,9 @@ export const deleteUspSliderById = async (req, res, next) => {
 };
 // Handle GET, POST, DELETE for /api/phone/offline_{shop}
 export const handleOfflineSession = async (req, res) => {
-    const shopParam = req.params.shop;
+    const shopParam = Array.isArray(req.params.shop)
+        ? req.params.shop[0]
+        : req.params.shop;
     const shop = shopParam?.replace(/^offline_/, "");
     if (!shop) {
         return res
@@ -240,7 +242,7 @@ export const handleOfflineSession = async (req, res) => {
 };
 // Handle GET, POST, DELETE for /api/phone/:id (Shopify session storage)
 export const handleSessionById = async (req, res) => {
-    const id = req.params.id;
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     // Only handle if id is NOT a valid ObjectId (to avoid conflict with phone routes)
     if (mongoose.Types.ObjectId.isValid(id)) {
         return res
