@@ -13,7 +13,6 @@ export const getCurrentShopifySessionId = async (
   try {
     const shopDomain = req.headers["x-shopify-shop-domain"] as string;
     console.log("🔑 getCurrentShopifySessionId - Shop domain:", shopDomain);
-
     if (!shopDomain) {
       console.log("❌ Missing shop domain header in session request");
       return res
@@ -99,7 +98,7 @@ export const getAllUspSlider = async (
 ) => {
   try {
     const response = await uspSliderService.getAllUsp();
-    if (!response) {
+    if (!response || response.length === 0) {
       return res
         .status(StatusCode.OK)
         .json(new ApiResponse(false, "No usp slider found.", []));

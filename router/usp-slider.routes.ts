@@ -33,11 +33,12 @@ router
 // POST uninstall-cleanup to null the shop access token
 router.post("/uninstall-cleanup", uninstallCleanup);
 
+// get current shopify_session_id for frontend
+router.get("/session/current/shop", getCurrentShopifySessionId);
+
 // Apply shopify header check for all below route
 router.use(validateShopifyHeader);
 
-// get current shopify_session_id for frontend
-router.get("/session/current", getCurrentShopifySessionId);
 // Create
 router.post("/add", validate(uspSliderSchema), createUspSlider);
 
