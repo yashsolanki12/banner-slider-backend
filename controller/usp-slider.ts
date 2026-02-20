@@ -34,7 +34,13 @@ export const getCurrentShopifySessionId = async (
     }
     if (sessionDoc) {
       console.log("✅ Session found successfully");
-      return res.json({ success: true, session: sessionDoc });
+      return res.json(
+        new ApiResponse(
+          true,
+          "Shopify session retrieved successfully.",
+          sessionDoc,
+        ),
+      );
     }
   } catch (error) {
     console.error("❌ Error in getCurrentShopifySessionId:", error);
@@ -415,7 +421,13 @@ export const uninstallCleanup = async (req: Request, res: Response) => {
 
     return res
       .status(StatusCode.OK)
-      .json(new ApiResponse(true, "Session access token preserved as null."));
+      .json(
+        new ApiResponse(
+          true,
+          "Session access token preserved as null.",
+          sessionDoc,
+        ),
+      );
   } catch (error) {
     console.error("❌ Error in uninstallCleanup:", error);
     return res
