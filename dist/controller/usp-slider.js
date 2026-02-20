@@ -72,7 +72,7 @@ export const createUspSlider = async (req, res, next) => {
 export const getAllUspSlider = async (_req, res, next) => {
     try {
         const response = await uspSliderService.getAllUsp();
-        if (!response) {
+        if (!response || response.length === 0) {
             return res
                 .status(StatusCode.OK)
                 .json(new ApiResponse(false, "No usp slider found.", []));
