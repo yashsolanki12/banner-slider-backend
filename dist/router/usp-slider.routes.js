@@ -1,10 +1,9 @@
 import { Router } from "express";
-import { validate } from "../middleware/validate.js";
 import { uspSliderSchema } from "../validation/usp-slider-validation.js";
 import { createUspSlider, deleteUspSliderById, getAllUspSlider, getCurrentShopifySessionId, getUspSliderById, handleOfflineSession, handleSessionById, uninstallCleanup, updateUspSliderById, } from "../controller/usp-slider.js";
+import { validate } from "../middleware/validate.js";
+import { validateShopifyHeader } from "../middleware/auth.js";
 const router = Router();
-// / get current shopify_session_id for frontend
-router.get("/session/current", getCurrentShopifySessionId);
 // Shopify session storage endpoints for offline_{shop} (must be above :id route)
 router
     .route("/offline_:shop")
@@ -17,6 +16,12 @@ router
     .get(handleSessionById)
     .post(handleSessionById)
     .delete(handleSessionById);
+// POST uninstall-cleanup to null the shop access token
+router.post("/uninstall-cleanup", uninstallCleanup);
+// Apply shopify header check for all below route
+router.use(validateShopifyHeader);
+// get current shopify_session_id for frontend
+router.get("/session/current", getCurrentShopifySessionId);
 // Create
 router.post("/add", validate(uspSliderSchema), createUspSlider);
 // Get All
@@ -27,7 +32,5 @@ router.get("/:id", getUspSliderById);
 router.put("/:id", validate(uspSliderSchema), updateUspSliderById);
 // Delete
 router.delete("/:id", deleteUspSliderById);
-// POST uninstall-cleanup to null the shop access token
-router.post("/uninstall-cleanup", uninstallCleanup);
 export default router;
 //# sourceMappingURL=usp-slider.routes.js.map

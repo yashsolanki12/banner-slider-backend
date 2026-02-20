@@ -80,11 +80,7 @@ export const createUspSlider = async (
       return res
         .status(StatusCode.CREATED)
         .json(
-          new ApiResponse(
-            true,
-            "Usp slider created successfully.",
-            response,
-          ),
+          new ApiResponse(true, "Usp slider created successfully.", response),
         );
     }
   } catch (error) {
@@ -112,11 +108,7 @@ export const getAllUspSlider = async (
       return res
         .status(StatusCode.OK)
         .json(
-          new ApiResponse(
-            true,
-            "Usp slider retrieved successfully",
-            response,
-          ),
+          new ApiResponse(true, "Usp slider retrieved successfully", response),
         );
     }
   } catch (error) {
@@ -152,11 +144,7 @@ export const getUspSliderById = async (
       return res
         .status(StatusCode.OK)
         .json(
-          new ApiResponse(
-            true,
-            "Usp slider retrieved successfully.",
-            response,
-          ),
+          new ApiResponse(true, "Usp slider retrieved successfully.", response),
         );
     }
   } catch (error) {
@@ -201,11 +189,7 @@ export const updateUspSliderById = async (
       return res
         .status(StatusCode.OK)
         .json(
-          new ApiResponse(
-            true,
-            "Usp slider updated successfully.",
-            response,
-          ),
+          new ApiResponse(true, "Usp slider updated successfully.", response),
         );
     }
   } catch (error) {
@@ -240,11 +224,7 @@ export const deleteUspSliderById = async (
       return res
         .status(StatusCode.OK)
         .json(
-          new ApiResponse(
-            true,
-            "Usp slider deleted successfully.",
-            response,
-          ),
+          new ApiResponse(true, "Usp slider deleted successfully.", response),
         );
     }
   } catch (error) {
@@ -381,7 +361,9 @@ export const uninstallCleanupBackground = async (shop: string) => {
       .findOne({ shop });
 
     if (!sessionDoc) {
-      console.log(`[uninstallCleanupBackground] No session found for shop: ${shop}`);
+      console.log(
+        `[uninstallCleanupBackground] No session found for shop: ${shop}`,
+      );
       return;
     }
 
@@ -389,14 +371,13 @@ export const uninstallCleanupBackground = async (shop: string) => {
       .collection("shopify_sessions")
       .updateOne({ shop }, { $set: { accessToken: null } });
 
-    console.log(`[uninstallCleanupBackground] Access token nulled for shop: ${shop}`);
-
+    console.log(
+      `[uninstallCleanupBackground] Access token nulled for shop: ${shop}`,
+    );
   } catch (error) {
     console.error("❌ Error in uninstallCleanupBackground:", error);
   }
 };
-
-
 
 // Uninstall cleanup: set accessToken to null for a shop instead of deleting records
 export const uninstallCleanup = async (req: Request, res: Response) => {
