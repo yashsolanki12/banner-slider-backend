@@ -71,7 +71,28 @@ export const createUspSlider = async (req, res, next) => {
 // List
 export const getAllUspSlider = async (_req, res, next) => {
     try {
-        const response = await uspSliderService.getAllUsp();
+        // Get shop domain header
+        const shopDomain = res.req.headers["x-shopify-shop-domain"];
+        console.log("📱 Get all usp slider - Shop Domain", shopDomain);
+        if (!shopDomain) {
+            return res
+                .status(StatusCode.BAD_REQUEST)
+                .json(new ApiResponse(false, "Missing shop domain header"));
+        }
+        // Find the session for this shop
+        const sessionDoc = await mongoose.connection
+            .collection("shopify_sessions")
+            .findOne({ shop: shopDomain });
+        console.log("Session found for all USP Bar 🔎", sessionDoc ? "Yes" : "No");
+        if (!sessionDoc || !sessionDoc._id) {
+            console.log("❌ Session not found for shop:", shopDomain);
+            return res
+                .status(StatusCode.NOT_FOUND)
+                .json(new ApiResponse(false, "Session not found."));
+        }
+        const response = await uspSliderService.getAllUsp({
+            shopify_session_id: sessionDoc._id,
+        });
         if (!response || response.length === 0) {
             return res
                 .status(StatusCode.OK)
