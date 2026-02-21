@@ -53,12 +53,12 @@ export const createUspSlider = async (req, res, next) => {
         if (!response) {
             return res
                 .status(StatusCode.BAD_REQUEST)
-                .json(new ApiResponse(false, "Failed to create new usp slider."));
+                .json(new ApiResponse(false, "Failed to create new usp bar."));
         }
         if (response) {
             return res
                 .status(StatusCode.CREATED)
-                .json(new ApiResponse(true, "Usp slider created successfully.", response));
+                .json(new ApiResponse(true, "USP Bar created successfully.", response));
         }
     }
     catch (error) {
@@ -77,7 +77,7 @@ export const getAllUspSlider = async (_req, res, next) => {
         if (!shopDomain) {
             return res
                 .status(StatusCode.BAD_REQUEST)
-                .json(new ApiResponse(false, "Missing shop domain header"));
+                .json(new ApiResponse(false, "Missing shop domain header."));
         }
         // Find the session for this shop
         const sessionDoc = await mongoose.connection
@@ -96,12 +96,12 @@ export const getAllUspSlider = async (_req, res, next) => {
         if (!response || response.length === 0) {
             return res
                 .status(StatusCode.OK)
-                .json(new ApiResponse(false, "No usp slider found.", []));
+                .json(new ApiResponse(false, "No USP Bar found.", []));
         }
         if (response) {
             return res
                 .status(StatusCode.OK)
-                .json(new ApiResponse(true, "Usp slider retrieved successfully", response));
+                .json(new ApiResponse(true, "USP Bar retrieved successfully.", response));
         }
     }
     catch (error) {
@@ -118,18 +118,18 @@ export const getUspSliderById = async (req, res, next) => {
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return res
                 .status(StatusCode.BAD_REQUEST)
-                .json(new ApiResponse(false, "Invalid usp slider ID format."));
+                .json(new ApiResponse(false, "Invalid USP Bar ID format."));
         }
         const response = await uspSliderService.getUspById(id);
         if (!response) {
             return res
                 .status(StatusCode.NOT_FOUND)
-                .json(new ApiResponse(false, "Usp slider not found."));
+                .json(new ApiResponse(false, "USP Bar not found."));
         }
         if (response) {
             return res
                 .status(StatusCode.OK)
-                .json(new ApiResponse(true, "Usp slider retrieved successfully.", response));
+                .json(new ApiResponse(true, "USP Bar retrieved successfully.", response));
         }
     }
     catch (error) {
@@ -147,7 +147,7 @@ export const updateUspSliderById = async (req, res, next) => {
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return res
                 .status(StatusCode.BAD_REQUEST)
-                .json(new ApiResponse(false, "Invalid usp slider ID format."));
+                .json(new ApiResponse(false, "Invalid USP Bar ID format."));
         }
         if (!title || !description) {
             return res
@@ -161,12 +161,12 @@ export const updateUspSliderById = async (req, res, next) => {
         if (!response) {
             return res
                 .status(StatusCode.NOT_FOUND)
-                .json(new ApiResponse(false, "Usp slider not found."));
+                .json(new ApiResponse(false, "USP Bar not found."));
         }
         if (response) {
             return res
                 .status(StatusCode.OK)
-                .json(new ApiResponse(true, "Usp slider updated successfully.", response));
+                .json(new ApiResponse(true, "USP Bar updated successfully.", response));
         }
     }
     catch (error) {
@@ -183,18 +183,18 @@ export const deleteUspSliderById = async (req, res, next) => {
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return res
                 .status(StatusCode.BAD_REQUEST)
-                .json(new ApiResponse(false, "Invalid usp slider ID format."));
+                .json(new ApiResponse(false, "Invalid USP Bar ID format."));
         }
         const response = await uspSliderService.deleteUspById(id);
         if (!response) {
             return res
                 .status(StatusCode.NOT_FOUND)
-                .json(new ApiResponse(false, "Usp slider not found."));
+                .json(new ApiResponse(false, "USP Bar not found."));
         }
         if (response) {
             return res
                 .status(StatusCode.OK)
-                .json(new ApiResponse(true, "Usp slider deleted successfully.", response));
+                .json(new ApiResponse(true, "USP Bar deleted successfully.", response));
         }
     }
     catch (error) {
