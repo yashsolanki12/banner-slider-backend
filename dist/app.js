@@ -30,6 +30,7 @@ app.get("/api/health", (_req, res) => {
         database: "connected",
     });
 });
+// Generate HMAC which use when submit the app
 app.post("/api/utils/generate-hmac", express.raw({ type: "application/json" }), (req, res) => {
     const secret = process.env.SHOPIFY_API_SECRET?.trim();
     if (!secret) {
