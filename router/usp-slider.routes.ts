@@ -11,6 +11,7 @@ import {
   uninstallCleanup,
   updateUspSliderById,
   getPublicUspSlider,
+  toggleUspSliderEnabled,
 } from "../controller/usp-slider.js";
 import { validate } from "../middleware/validate.js";
 import { validateShopifyHeader } from "../middleware/auth.js";
@@ -48,6 +49,9 @@ router.post("/add", validate(uspSliderSchema), createUspSlider);
 
 // Get All
 router.get("/", getAllUspSlider);
+
+// Toggle enabled status
+router.patch("/toggle/:id", toggleUspSliderEnabled);
 
 // Detail
 router.get("/:id", getUspSliderById);
