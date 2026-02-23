@@ -378,4 +378,51 @@ export const uninstallCleanup = async (req, res) => {
             .json(new ApiResponse(false, "Internal server error"));
     }
 };
+// Public API for storefront theme - get USP bar data by shop domain
+export const getPublicUspSlider = async (req, res) => {
+    try {
+        const shopParam = Array.isArray(req.params.shop)
+            ? req.params.shop[0]
+            : req.params.shop;
+        // Handle both with and without .myshopify.com
+        let shop = shopParam;
+        if (!shop.includes(".myshopify.com")) {
+            shop = `${shop}.myshopify.com`;
+        }
+        console.log("🌐 Public API - Shop:", shop);
+        if (!shop) {
+            return res
+                .status(StatusCode.BAD_REQUEST)
+                .json(new ApiResponse(false, "Missing shop domain."));
+        }
+        // Find the session for this shop
+        const sessionDoc = await mongoose.connection
+            .collection("shopify_sessions")
+            .findOne({ shop });
+        if (!sessionDoc || !sessionDoc._id) {
+            console.log("❌ Session not found for shop:", shop);
+            return res
+                .status(StatusCode.OK)
+                .json(new ApiResponse(true, "No USP Bar found.", []));
+        }
+        // Get all USP bar items for this shop
+        const response = await uspSliderService.getAllUsp({
+            shopify_session_id: sessionDoc._id,
+        });
+        if (!response || response.length === 0) {
+            return res
+                .status(StatusCode.OK)
+                .json(new ApiResponse(true, "No USP Bar found.", []));
+        }
+        return res
+            .status(StatusCode.OK)
+            .json(new ApiResponse(true, "USP Bar retrieved successfully.", response));
+    }
+    catch (error) {
+        console.error("❌ Error in getPublicUspSlider:", error);
+        return res
+            .status(StatusCode.INTERNAL_SERVER_ERROR)
+            .json(new ApiResponse(false, "Internal server error"));
+    }
+};
 //# sourceMappingURL=usp-slider.js.map

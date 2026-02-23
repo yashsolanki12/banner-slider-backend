@@ -99,7 +99,14 @@ app.use(cors({
         }
     },
     credentials: true,
-    allowedHeaders: ["Content-Type", "x-shopify-shop-domain"],
+    allowedHeaders: [
+        "Content-Type",
+        "x-shopify-shop-domain",
+        "Accept",
+        "Origin",
+        "X-Requested-With",
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
 }));
 // Routes for banner slider
 app.use("/api/usp-slider", uspSliderRoutes);

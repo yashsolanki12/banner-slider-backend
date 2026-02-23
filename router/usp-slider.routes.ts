@@ -10,6 +10,7 @@ import {
   handleSessionById,
   uninstallCleanup,
   updateUspSliderById,
+  getPublicUspSlider,
 } from "../controller/usp-slider.js";
 import { validate } from "../middleware/validate.js";
 import { validateShopifyHeader } from "../middleware/auth.js";
@@ -35,6 +36,9 @@ router.post("/uninstall-cleanup", uninstallCleanup);
 
 // get current shopify_session_id for frontend
 router.get("/session/current/shop", getCurrentShopifySessionId);
+
+// Public API for storefront theme (no auth required)
+router.get("/public/:shop", getPublicUspSlider);
 
 // Apply shopify header check for all below route
 router.use(validateShopifyHeader);
