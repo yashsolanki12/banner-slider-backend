@@ -7,6 +7,16 @@ const uspSliderSchema = new Schema({
         ref: "ShopifySession",
         required: true,
     },
+    enabled: { type: Boolean, default: true },
+    designSettings: {
+        backgroundColor: { type: String, default: "#f8f9fa" },
+        itemBackgroundColor: { type: String, default: "#ffffff" },
+        titleColor: { type: String, default: "#333333" },
+        descriptionColor: { type: String, default: "#666666" },
+        iconBackgroundColor: { type: String, default: "#4CAF50" },
+        iconColor: { type: String, default: "#ffffff" },
+        slideSpeed: { type: Number, default: 4 },
+    },
 }, {
     timestamps: true,
 });
