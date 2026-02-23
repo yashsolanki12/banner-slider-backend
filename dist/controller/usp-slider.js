@@ -417,7 +417,8 @@ export const getPublicUspSlider = async (req, res) => {
         if (!shop.includes(".myshopify.com")) {
             shop = `${shop}.myshopify.com`;
         }
-        console.log("🌐 Public API - Shop:", shop);
+        console.log("🌐 Public API - Shop param:", shopParam);
+        console.log("🌐 Public API - Shop formatted:", shop);
         if (!shop) {
             return res
                 .status(StatusCode.BAD_REQUEST)
@@ -427,8 +428,18 @@ export const getPublicUspSlider = async (req, res) => {
         const sessionDoc = await mongoose.connection
             .collection("shopify_sessions")
             .findOne({ shop });
+        console.log("🔍 Session found:", sessionDoc ? "Yes" : "No");
+        if (sessionDoc) {
+            console.log("🔍 Session _id:", sessionDoc._id);
+        }
         if (!sessionDoc || !sessionDoc._id) {
             console.log("❌ Session not found for shop:", shop);
+            // Try to find all sessions to debug
+            const allSessions = await mongoose.connection
+                .collection("shopify_sessions")
+                .find({})
+                .toArray();
+            console.log("📋 All sessions shops:", allSessions.map((s) => s.shop));
             return res
                 .status(StatusCode.OK)
                 .json(new ApiResponse(true, "No USP Bar found.", []));
@@ -438,6 +449,7 @@ export const getPublicUspSlider = async (req, res) => {
             shopify_session_id: sessionDoc._id,
             enabled: true,
         });
+        console.log("📦 USP Bar items found:", response ? response.length : 0);
         if (!response || response.length === 0) {
             return res
                 .status(StatusCode.OK)
