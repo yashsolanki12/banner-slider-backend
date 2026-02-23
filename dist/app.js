@@ -106,7 +106,7 @@ app.use(cors({
         "Origin",
         "X-Requested-With",
     ],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
 }));
 // Routes for banner slider
 app.use("/api/usp-slider", uspSliderRoutes);
