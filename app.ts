@@ -125,7 +125,14 @@ app.use(
       }
     },
     credentials: true,
-    allowedHeaders: ["Content-Type", "x-shopify-shop-domain"],
+    allowedHeaders: [
+      "Content-Type",
+      "x-shopify-shop-domain",
+      "Accept",
+      "Origin",
+      "X-Requested-With",
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   }),
 );
 
