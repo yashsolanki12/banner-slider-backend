@@ -84,9 +84,7 @@ export const createUspSlider = async (
     if (response) {
       return res
         .status(StatusCode.CREATED)
-        .json(
-          new ApiResponse(true, "USP Bar created successfully.", response),
-        );
+        .json(new ApiResponse(true, "USP Bar created successfully.", response));
     }
   } catch (error) {
     next(error);
@@ -129,7 +127,7 @@ export const getAllUspSlider = async (
     const response = await uspSliderService.getAllUsp({
       shopify_session_id: sessionDoc._id,
     });
-    
+
     if (!response || response.length === 0) {
       return res
         .status(StatusCode.OK)
@@ -220,9 +218,7 @@ export const updateUspSliderById = async (
     if (response) {
       return res
         .status(StatusCode.OK)
-        .json(
-          new ApiResponse(true, "USP Bar updated successfully.", response),
-        );
+        .json(new ApiResponse(true, "USP Bar updated successfully.", response));
     }
   } catch (error) {
     next(error);
@@ -255,13 +251,7 @@ export const deleteUspSliderById = async (
     if (response) {
       return res
         .status(StatusCode.OK)
-        .json(
-          new ApiResponse(
-            true,
-            "USP Bar deleted successfully.",
-            response,
-          ),
-        );
+        .json(new ApiResponse(true, "USP Bar deleted successfully.", response));
     }
   } catch (error) {
     next(error);
@@ -461,6 +451,61 @@ export const uninstallCleanup = async (req: Request, res: Response) => {
       );
   } catch (error) {
     console.error("❌ Error in uninstallCleanup:", error);
+    return res
+      .status(StatusCode.INTERNAL_SERVER_ERROR)
+      .json(new ApiResponse(false, "Internal server error"));
+  }
+};
+
+// Public API for storefront theme - get USP bar data by shop domain
+export const getPublicUspSlider = async (req: Request, res: Response) => {
+  try {
+    const shopParam = Array.isArray(req.params.shop)
+      ? req.params.shop[0]
+      : req.params.shop;
+
+    // Handle both with and without .myshopify.com
+    let shop = shopParam;
+    if (!shop.includes(".myshopify.com")) {
+      shop = `${shop}.myshopify.com`;
+    }
+
+    console.log("🌐 Public API - Shop:", shop);
+
+    if (!shop) {
+      return res
+        .status(StatusCode.BAD_REQUEST)
+        .json(new ApiResponse(false, "Missing shop domain."));
+    }
+
+    // Find the session for this shop
+    const sessionDoc = await mongoose.connection
+      .collection("shopify_sessions")
+      .findOne({ shop });
+
+    if (!sessionDoc || !sessionDoc._id) {
+      console.log("❌ Session not found for shop:", shop);
+      return res
+        .status(StatusCode.OK)
+        .json(new ApiResponse(true, "No USP Bar found.", []));
+    }
+
+    // Get all USP bar items for this shop
+    const response = await uspSliderService.getAllUsp({
+      shopify_session_id: sessionDoc._id,
+    });
+
+    if (!response || response.length === 0) {
+      return res
+        .status(StatusCode.OK)
+        .json(new ApiResponse(true, "No USP Bar found.", []));
+    }
+
+    return res
+      .status(StatusCode.OK)
+      .json(new ApiResponse(true, "USP Bar retrieved successfully.", response));
+  } catch (error) {
+    console.error("❌ Error in getPublicUspSlider:", error);
     return res
       .status(StatusCode.INTERNAL_SERVER_ERROR)
       .json(new ApiResponse(false, "Internal server error"));

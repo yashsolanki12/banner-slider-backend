@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { uspSliderSchema } from "../validation/usp-slider-validation.js";
-import { createUspSlider, deleteUspSliderById, getAllUspSlider, getCurrentShopifySessionId, getUspSliderById, handleOfflineSession, handleSessionById, uninstallCleanup, updateUspSliderById, } from "../controller/usp-slider.js";
+import { createUspSlider, deleteUspSliderById, getAllUspSlider, getCurrentShopifySessionId, getUspSliderById, handleOfflineSession, handleSessionById, uninstallCleanup, updateUspSliderById, getPublicUspSlider, } from "../controller/usp-slider.js";
 import { validate } from "../middleware/validate.js";
 import { validateShopifyHeader } from "../middleware/auth.js";
 const router = Router();
@@ -20,6 +20,8 @@ router
 router.post("/uninstall-cleanup", uninstallCleanup);
 // get current shopify_session_id for frontend
 router.get("/session/current/shop", getCurrentShopifySessionId);
+// Public API for storefront theme (no auth required)
+router.get("/public/:shop", getPublicUspSlider);
 // Apply shopify header check for all below route
 router.use(validateShopifyHeader);
 // Create
