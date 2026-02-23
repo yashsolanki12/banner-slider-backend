@@ -48,6 +48,13 @@ export const getAllUsp = async (
       mongoFilter.shopify_session_id as any,
     );
   }
+
+  // Handle enabled filter - if enabled is true, also include documents where enabled doesn't exist
+  if (mongoFilter.enabled === true) {
+    mongoFilter.$or = [{ enabled: true }, { enabled: { $exists: false } }];
+    delete mongoFilter.enabled;
+  }
+
   return await UspSlider.find(mongoFilter).sort({ createdAt: -1 });
 };
 

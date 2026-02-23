@@ -29,6 +29,11 @@ export const getAllUsp = async (filter = {}) => {
     if (mongoFilter.shopify_session_id) {
         mongoFilter.shopify_session_id = new mongoose.Types.ObjectId(mongoFilter.shopify_session_id);
     }
+    // Handle enabled filter - if enabled is true, also include documents where enabled doesn't exist
+    if (mongoFilter.enabled === true) {
+        mongoFilter.$or = [{ enabled: true }, { enabled: { $exists: false } }];
+        delete mongoFilter.enabled;
+    }
     return await UspSlider.find(mongoFilter).sort({ createdAt: -1 });
 };
 // Get by id
