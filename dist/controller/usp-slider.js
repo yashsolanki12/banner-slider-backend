@@ -39,7 +39,7 @@ export const getCurrentShopifySessionId = async (req, res) => {
 // Create
 export const createUspSlider = async (req, res, next) => {
     try {
-        const { title, description, shopify_session_id } = req.body;
+        const { title, description, shopify_session_id, designSettings } = req.body;
         if (!title || !description || !shopify_session_id) {
             return res
                 .status(StatusCode.BAD_REQUEST)
@@ -49,6 +49,7 @@ export const createUspSlider = async (req, res, next) => {
             title,
             description,
             shopify_session_id,
+            designSettings,
         });
         if (!response) {
             return res
@@ -143,7 +144,7 @@ export const getUspSliderById = async (req, res, next) => {
 export const updateUspSliderById = async (req, res, next) => {
     try {
         const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-        const { title, description } = req.body;
+        const { title, description, designSettings } = req.body;
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return res
                 .status(StatusCode.BAD_REQUEST)
@@ -157,6 +158,7 @@ export const updateUspSliderById = async (req, res, next) => {
         const response = await uspSliderService.updateUspById(id, {
             title,
             description,
+            designSettings,
         });
         if (!response) {
             return res
@@ -196,6 +198,32 @@ export const deleteUspSliderById = async (req, res, next) => {
                 .status(StatusCode.OK)
                 .json(new ApiResponse(true, "USP Bar deleted successfully.", response));
         }
+    }
+    catch (error) {
+        next(error);
+        return res
+            .status(StatusCode.INTERNAL_SERVER_ERROR)
+            .json(new ApiResponse(false, "Internal Server Error"));
+    }
+};
+// Toggle enabled status
+export const toggleUspSliderEnabled = async (req, res, next) => {
+    try {
+        const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res
+                .status(StatusCode.BAD_REQUEST)
+                .json(new ApiResponse(false, "Invalid USP Bar ID format."));
+        }
+        const response = await uspSliderService.toggleEnabled(id);
+        if (!response) {
+            return res
+                .status(StatusCode.NOT_FOUND)
+                .json(new ApiResponse(false, "USP Bar not found."));
+        }
+        return res
+            .status(StatusCode.OK)
+            .json(new ApiResponse(true, `USP Bar ${response.enabled ? "enabled" : "disabled"} successfully.`, response));
     }
     catch (error) {
         next(error);
@@ -405,9 +433,10 @@ export const getPublicUspSlider = async (req, res) => {
                 .status(StatusCode.OK)
                 .json(new ApiResponse(true, "No USP Bar found.", []));
         }
-        // Get all USP bar items for this shop
+        // Get all enabled USP bar items for this shop
         const response = await uspSliderService.getAllUsp({
             shopify_session_id: sessionDoc._id,
+            enabled: true,
         });
         if (!response || response.length === 0) {
             return res

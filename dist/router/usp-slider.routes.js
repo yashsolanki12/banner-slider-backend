@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { uspSliderSchema } from "../validation/usp-slider-validation.js";
-import { createUspSlider, deleteUspSliderById, getAllUspSlider, getCurrentShopifySessionId, getUspSliderById, handleOfflineSession, handleSessionById, uninstallCleanup, updateUspSliderById, getPublicUspSlider, } from "../controller/usp-slider.js";
+import { createUspSlider, deleteUspSliderById, getAllUspSlider, getCurrentShopifySessionId, getUspSliderById, handleOfflineSession, handleSessionById, uninstallCleanup, updateUspSliderById, getPublicUspSlider, toggleUspSliderEnabled, } from "../controller/usp-slider.js";
 import { validate } from "../middleware/validate.js";
 import { validateShopifyHeader } from "../middleware/auth.js";
 const router = Router();
@@ -28,6 +28,8 @@ router.use(validateShopifyHeader);
 router.post("/add", validate(uspSliderSchema), createUspSlider);
 // Get All
 router.get("/", getAllUspSlider);
+// Toggle enabled status
+router.patch("/toggle/:id", toggleUspSliderEnabled);
 // Detail
 router.get("/:id", getUspSliderById);
 // Update
