@@ -14,6 +14,7 @@ const defaultDesignSettings: DesignSettings = {
   iconBackgroundColor: "#4CAF50",
   iconColor: "#ffffff",
   slideSpeed: 4,
+  itemBorderRightColor: "#e0e0e0", // Default vertical border color
 };
 
 // Create new usp slider
