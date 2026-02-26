@@ -9,7 +9,7 @@ const defaultDesignSettings = {
     iconBackgroundColor: "#4CAF50",
     iconColor: "#ffffff",
     slideSpeed: 4,
-    itemBorderRightColor: "#e0e0e0", // Default vertical border color
+    itemBorderRightColor: "#000000", // Default vertical border color (black)
 };
 // Create new usp slider
 export const createUsp = async (data) => {
