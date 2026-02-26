@@ -20,7 +20,7 @@ const defaultDesignSettings: DesignSettings = {
 export const createUsp = async (
   data: Pick<
     UspSliderDocument,
-    "title" | "description" | "shopify_session_id"
+    "title" | "description" | "shopify_session_id" | "icon"
   > & {
     designSettings?: Partial<DesignSettings>;
     enabled?: boolean;
@@ -31,6 +31,7 @@ export const createUsp = async (
     description: data.description,
     shopify_session_id: data.shopify_session_id,
     enabled: data.enabled ?? true,
+    icon: data.icon,
     designSettings: {
       ...defaultDesignSettings,
       ...data.designSettings,
@@ -68,7 +69,7 @@ export const getUspById = async (
 // Update
 export const updateUspById = async (
   id: string,
-  data: Pick<UspSliderDocument, "title" | "description"> & {
+  data: Pick<UspSliderDocument, "title" | "description" | "icon"> & {
     designSettings?: Partial<DesignSettings>;
     enabled?: boolean;
   },
@@ -77,6 +78,10 @@ export const updateUspById = async (
     title: data.title,
     description: data.description,
   };
+
+  if (data.icon !== undefined) {
+    updateData.icon = data.icon;
+  }
 
   if (data.designSettings) {
     updateData.designSettings = data.designSettings;

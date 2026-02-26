@@ -16,4 +16,5 @@ export interface UspSliderDocument extends Document {
   shopify_session_id?: Types.ObjectId;
   designSettings: DesignSettings;
   enabled: boolean;
+  icon?: string; // Base64 encoded icon or image URL
 }

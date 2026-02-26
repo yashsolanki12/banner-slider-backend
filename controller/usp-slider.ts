@@ -57,7 +57,8 @@ export const createUspSlider = async (
   next: NextFunction,
 ) => {
   try {
-    const { title, description, shopify_session_id, designSettings } = req.body;
+    const { title, description, shopify_session_id, designSettings, icon } =
+      req.body;
 
     if (!title || !description || !shopify_session_id) {
       return res
@@ -75,6 +76,7 @@ export const createUspSlider = async (
       description,
       shopify_session_id,
       designSettings,
+      icon,
     });
 
     if (!response) {
@@ -194,7 +196,7 @@ export const updateUspSliderById = async (
 ) => {
   try {
     const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-    const { title, description, designSettings } = req.body;
+    const { title, description, designSettings, icon } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res
@@ -211,6 +213,7 @@ export const updateUspSliderById = async (
       title,
       description,
       designSettings,
+      icon,
     });
     if (!response) {
       return res
