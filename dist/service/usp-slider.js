@@ -17,6 +17,7 @@ export const createUsp = async (data) => {
         description: data.description,
         shopify_session_id: data.shopify_session_id,
         enabled: data.enabled ?? true,
+        icon: data.icon,
         designSettings: {
             ...defaultDesignSettings,
             ...data.designSettings,
@@ -46,6 +47,9 @@ export const updateUspById = async (id, data) => {
         title: data.title,
         description: data.description,
     };
+    if (data.icon !== undefined) {
+        updateData.icon = data.icon;
+    }
     if (data.designSettings) {
         updateData.designSettings = data.designSettings;
     }

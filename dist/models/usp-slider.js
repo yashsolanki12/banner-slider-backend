@@ -8,6 +8,7 @@ const uspSliderSchema = new Schema({
         required: true,
     },
     enabled: { type: Boolean, default: true },
+    icon: { type: String, default: null }, // Store base64 encoded icon or image URL
     designSettings: {
         backgroundColor: { type: String, default: "#f8f9fa" },
         itemBackgroundColor: { type: String, default: "#ffffff" },

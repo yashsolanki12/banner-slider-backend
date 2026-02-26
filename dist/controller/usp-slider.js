@@ -39,7 +39,7 @@ export const getCurrentShopifySessionId = async (req, res) => {
 // Create
 export const createUspSlider = async (req, res, next) => {
     try {
-        const { title, description, shopify_session_id, designSettings } = req.body;
+        const { title, description, shopify_session_id, designSettings, icon } = req.body;
         if (!title || !description || !shopify_session_id) {
             return res
                 .status(StatusCode.BAD_REQUEST)
@@ -50,6 +50,7 @@ export const createUspSlider = async (req, res, next) => {
             description,
             shopify_session_id,
             designSettings,
+            icon,
         });
         if (!response) {
             return res
@@ -144,7 +145,7 @@ export const getUspSliderById = async (req, res, next) => {
 export const updateUspSliderById = async (req, res, next) => {
     try {
         const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-        const { title, description, designSettings } = req.body;
+        const { title, description, designSettings, icon } = req.body;
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return res
                 .status(StatusCode.BAD_REQUEST)
@@ -159,6 +160,7 @@ export const updateUspSliderById = async (req, res, next) => {
             title,
             description,
             designSettings,
+            icon,
         });
         if (!response) {
             return res
