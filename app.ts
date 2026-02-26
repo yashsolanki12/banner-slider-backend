@@ -132,7 +132,7 @@ app.use(
       "Origin",
       "X-Requested-With",
     ],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS","PATCH"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
   }),
 );
 
