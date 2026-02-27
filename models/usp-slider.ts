@@ -20,6 +20,7 @@ const uspSliderSchema = new Schema<UspSliderDocument>(
       iconBackgroundColor: { type: String, default: "#4CAF50" },
       iconColor: { type: String, default: "#ffffff" },
       slideSpeed: { type: Number, default: 4 },
+      itemBorderRightColor: {type: String, default: "#000000"}
     },
   },
   {
