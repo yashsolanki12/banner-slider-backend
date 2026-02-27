@@ -15,6 +15,7 @@ export const uspSliderSchema = z.object({
         iconBackgroundColor: z.string().optional(),
         iconColor: z.string().optional(),
         slideSpeed: z.number().min(2).max(10).optional(),
+        itemBorderRightColor: z.string().optional(),
       })
       .optional(),
   }),
