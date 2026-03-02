@@ -142,9 +142,6 @@ app.use("/api/usp-slider", uspSliderRoutes);
 // Routes for shopify authentication
 app.use("/api/shopify", shopifyAuthRoutes);
 
-// Global Error Handler
-app.use(errorHandler);
-
 // Handle 404 - This must be after all other routes
 app.use((req, res) => {
   console.log(`404 - Not Found: ${req.method} ${req.originalUrl}`);
@@ -153,15 +150,8 @@ app.use((req, res) => {
     .json({ error: "Not Found", path: req.originalUrl });
 });
 
-// Error handling middleware - This must be after all other middleware
-app.use((err: any, _req: any, res: any, _next: any) => {
-  console.error("Error:", err.message);
-  res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
-    error: "Internal Server Error",
-    message: err.message,
-    stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
-  });
-});
+// Global Error Handler
+app.use(errorHandler);
 
 // Database connection
 const mongoDbUrl = process.env.MONGODB_URL;
