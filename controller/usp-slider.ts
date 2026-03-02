@@ -1,23 +1,20 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response } from "express";
 import { StatusCode } from "../utils/status-code.js";
 import { ApiResponse } from "../utils/api-response.js";
+import { asyncHandler } from "../utils/async-handler.js";
+import { AppError } from "../utils/app-error.js";
 import * as uspSliderService from "../service/usp-slider.js";
 import mongoose from "mongoose";
 import shopifySession from "../models/shopify-session.js";
 
 // Get current shopify_session_id
-export const getCurrentShopifySessionId = async (
-  req: Request,
-  res: Response,
-) => {
-  try {
+export const getCurrentShopifySessionId = asyncHandler(
+  async (req: Request, res: Response) => {
     const shopDomain = req.headers["x-shopify-shop-domain"] as string;
     console.log("🔑 getCurrentShopifySessionId - Shop domain:", shopDomain);
+
     if (!shopDomain) {
-      console.log("❌ Missing shop domain header in session request");
-      return res
-        .status(StatusCode.BAD_REQUEST)
-        .json(new ApiResponse(false, "Missing shop domain header."));
+      throw new AppError("Missing shop domain header.", StatusCode.BAD_REQUEST);
     }
 
     const sessionDoc = await mongoose.connection
@@ -27,48 +24,31 @@ export const getCurrentShopifySessionId = async (
     console.log("🔍 Session document found:", sessionDoc ? "Yes" : "No");
 
     if (!sessionDoc || !sessionDoc._id) {
-      console.log("❌ Session not found for shop:", shopDomain);
-      return res
-        .status(StatusCode.NOT_FOUND)
-        .json(new ApiResponse(false, "Session not found."));
+      throw new AppError("Session not found.", StatusCode.NOT_FOUND);
     }
-    if (sessionDoc) {
-      console.log("✅ Session found successfully");
-      return res.json(
-        new ApiResponse(
-          true,
-          "Shopify session retrieved successfully.",
-          sessionDoc,
-        ),
-      );
-    }
-  } catch (error) {
-    console.error("❌ Error in getCurrentShopifySessionId:", error);
-    return res
-      .status(StatusCode.INTERNAL_SERVER_ERROR)
-      .json(new ApiResponse(false, "Internal server error"));
-  }
-};
+
+    console.log("✅ Session found successfully");
+    return res.json(
+      new ApiResponse(
+        true,
+        "Shopify session retrieved successfully.",
+        sessionDoc,
+      ),
+    );
+  },
+);
 
 // Create
-export const createUspSlider = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
+export const createUspSlider = asyncHandler(
+  async (req: Request, res: Response) => {
     const { title, description, shopify_session_id, designSettings, icon } =
       req.body;
 
     if (!title || !description || !shopify_session_id) {
-      return res
-        .status(StatusCode.BAD_REQUEST)
-        .json(
-          new ApiResponse(
-            false,
-            "Title, description and shopify_session_id are required.",
-          ),
-        );
+      throw new AppError(
+        "Title, description and shopify_session_id are required.",
+        StatusCode.BAD_REQUEST,
+      );
     }
 
     const response = await uspSliderService.createUsp({
@@ -80,38 +60,27 @@ export const createUspSlider = async (
     });
 
     if (!response) {
-      return res
-        .status(StatusCode.BAD_REQUEST)
-        .json(new ApiResponse(false, "Failed to create new usp bar."));
+      throw new AppError(
+        "Failed to create new usp bar.",
+        StatusCode.BAD_REQUEST,
+      );
     }
-    if (response) {
-      return res
-        .status(StatusCode.CREATED)
-        .json(new ApiResponse(true, "USP Bar created successfully.", response));
-    }
-  } catch (error) {
-    next(error);
+
     return res
-      .status(StatusCode.INTERNAL_SERVER_ERROR)
-      .json(new ApiResponse(false, "Internal Server Error"));
-  }
-};
+      .status(StatusCode.CREATED)
+      .json(new ApiResponse(true, "USP Bar created successfully.", response));
+  },
+);
 
 // List
-export const getAllUspSlider = async (
-  _req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
+export const getAllUspSlider = asyncHandler(
+  async (_req: Request, res: Response) => {
     // Get shop domain header
     const shopDomain = res.req.headers["x-shopify-shop-domain"] as string;
     console.log("📱 Get all usp slider - Shop Domain", shopDomain);
 
     if (!shopDomain) {
-      return res
-        .status(StatusCode.BAD_REQUEST)
-        .json(new ApiResponse(false, "Missing shop domain header."));
+      throw new AppError("Missing shop domain header.", StatusCode.BAD_REQUEST);
     }
 
     // Find the session for this shop
@@ -122,11 +91,9 @@ export const getAllUspSlider = async (
     console.log("Session found for all USP Bar 🔎", sessionDoc ? "Yes" : "No");
 
     if (!sessionDoc || !sessionDoc._id) {
-      console.log("❌ Session not found for shop:", shopDomain);
-      return res
-        .status(StatusCode.NOT_FOUND)
-        .json(new ApiResponse(false, "Session not found."));
+      throw new AppError("Session not found.", StatusCode.NOT_FOUND);
     }
+
     const response = await uspSliderService.getAllUsp({
       shopify_session_id: sessionDoc._id,
     });
@@ -137,76 +104,48 @@ export const getAllUspSlider = async (
         .json(new ApiResponse(false, "No USP Bar found.", []));
     }
 
-    if (response) {
-      return res
-        .status(StatusCode.OK)
-        .json(
-          new ApiResponse(true, "USP Bar retrieved successfully.", response),
-        );
-    }
-  } catch (error) {
-    next(error);
     return res
-      .status(StatusCode.INTERNAL_SERVER_ERROR)
-      .json(new ApiResponse(false, "Internal Server Error"));
-  }
-};
+      .status(StatusCode.OK)
+      .json(new ApiResponse(true, "USP Bar retrieved successfully.", response));
+  },
+);
 
 // Detail
-export const getUspSliderById = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
+export const getUspSliderById = asyncHandler(
+  async (req: Request, res: Response) => {
     const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res
-        .status(StatusCode.BAD_REQUEST)
-        .json(new ApiResponse(false, "Invalid USP Bar ID format."));
+      throw new AppError("Invalid USP Bar ID format.", StatusCode.BAD_REQUEST);
     }
 
     const response = await uspSliderService.getUspById(id);
+
     if (!response) {
-      return res
-        .status(StatusCode.NOT_FOUND)
-        .json(new ApiResponse(false, "USP Bar not found."));
+      throw new AppError("USP Bar not found.", StatusCode.NOT_FOUND);
     }
-    if (response) {
-      return res
-        .status(StatusCode.OK)
-        .json(
-          new ApiResponse(true, "USP Bar retrieved successfully.", response),
-        );
-    }
-  } catch (error) {
-    next(error);
+
     return res
-      .status(StatusCode.INTERNAL_SERVER_ERROR)
-      .json(new ApiResponse(false, "Internal Server Error"));
-  }
-};
+      .status(StatusCode.OK)
+      .json(new ApiResponse(true, "USP Bar retrieved successfully.", response));
+  },
+);
 
 // Update
-export const updateUspSliderById = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
+export const updateUspSliderById = asyncHandler(
+  async (req: Request, res: Response) => {
     const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     const { title, description, designSettings, icon } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res
-        .status(StatusCode.BAD_REQUEST)
-        .json(new ApiResponse(false, "Invalid USP Bar ID format."));
+      throw new AppError("Invalid USP Bar ID format.", StatusCode.BAD_REQUEST);
     }
+
     if (!title || !description) {
-      return res
-        .status(StatusCode.BAD_REQUEST)
-        .json(new ApiResponse(false, "Title, description are required."));
+      throw new AppError(
+        "Title, description are required.",
+        StatusCode.BAD_REQUEST,
+      );
     }
 
     const response = await uspSliderService.updateUspById(id, {
@@ -215,77 +154,51 @@ export const updateUspSliderById = async (
       designSettings,
       icon,
     });
+
     if (!response) {
-      return res
-        .status(StatusCode.NOT_FOUND)
-        .json(new ApiResponse(false, "USP Bar not found."));
+      throw new AppError("USP Bar not found.", StatusCode.NOT_FOUND);
     }
-    if (response) {
-      return res
-        .status(StatusCode.OK)
-        .json(new ApiResponse(true, "USP Bar updated successfully.", response));
-    }
-  } catch (error) {
-    next(error);
+
     return res
-      .status(StatusCode.INTERNAL_SERVER_ERROR)
-      .json(new ApiResponse(false, "Internal Server Error"));
-  }
-};
+      .status(StatusCode.OK)
+      .json(new ApiResponse(true, "USP Bar updated successfully.", response));
+  },
+);
 
 // Delete
-export const deleteUspSliderById = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
+export const deleteUspSliderById = asyncHandler(
+  async (req: Request, res: Response) => {
     const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res
-        .status(StatusCode.BAD_REQUEST)
-        .json(new ApiResponse(false, "Invalid USP Bar ID format."));
+      throw new AppError("Invalid USP Bar ID format.", StatusCode.BAD_REQUEST);
     }
+
     const response = await uspSliderService.deleteUspById(id);
+
     if (!response) {
-      return res
-        .status(StatusCode.NOT_FOUND)
-        .json(new ApiResponse(false, "USP Bar not found."));
+      throw new AppError("USP Bar not found.", StatusCode.NOT_FOUND);
     }
-    if (response) {
-      return res
-        .status(StatusCode.OK)
-        .json(new ApiResponse(true, "USP Bar deleted successfully.", response));
-    }
-  } catch (error) {
-    next(error);
+
     return res
-      .status(StatusCode.INTERNAL_SERVER_ERROR)
-      .json(new ApiResponse(false, "Internal Server Error"));
-  }
-};
+      .status(StatusCode.OK)
+      .json(new ApiResponse(true, "USP Bar deleted successfully.", response));
+  },
+);
 
 // Toggle enabled status
-export const toggleUspSliderEnabled = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
+export const toggleUspSliderEnabled = asyncHandler(
+  async (req: Request, res: Response) => {
     const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res
-        .status(StatusCode.BAD_REQUEST)
-        .json(new ApiResponse(false, "Invalid USP Bar ID format."));
+      throw new AppError("Invalid USP Bar ID format.", StatusCode.BAD_REQUEST);
     }
 
     const response = await uspSliderService.toggleEnabled(id);
+
     if (!response) {
-      return res
-        .status(StatusCode.NOT_FOUND)
-        .json(new ApiResponse(false, "USP Bar not found."));
+      throw new AppError("USP Bar not found.", StatusCode.NOT_FOUND);
     }
 
     return res
@@ -297,42 +210,36 @@ export const toggleUspSliderEnabled = async (
           response,
         ),
       );
-  } catch (error) {
-    next(error);
-    return res
-      .status(StatusCode.INTERNAL_SERVER_ERROR)
-      .json(new ApiResponse(false, "Internal Server Error"));
-  }
-};
+  },
+);
 
 // Handle GET, POST, DELETE for /api/phone/offline_{shop}
-export const handleOfflineSession = async (req: Request, res: Response) => {
-  const shopParam = Array.isArray(req.params.shop)
-    ? req.params.shop[0]
-    : req.params.shop;
-  const shop = shopParam?.replace(/^offline_/, "");
-  if (!shop) {
-    return res
-      .status(StatusCode.BAD_REQUEST)
-      .json(new ApiResponse(false, "Missing shop domain in URL."));
-  }
-  try {
+export const handleOfflineSession = asyncHandler(
+  async (req: Request, res: Response) => {
+    const shopParam = Array.isArray(req.params.shop)
+      ? req.params.shop[0]
+      : req.params.shop;
+    const shop = shopParam?.replace(/^offline_/, "");
+
+    if (!shop) {
+      throw new AppError("Missing shop domain in URL.", StatusCode.BAD_REQUEST);
+    }
+
     if (req.method === "GET") {
       // Find session by shop domain
       const session = await shopifySession.findOne({ shop });
       if (!session) {
-        return res
-          .status(StatusCode.NOT_FOUND)
-          .json(new ApiResponse(false, "Session not found."));
+        throw new AppError("Session not found.", StatusCode.NOT_FOUND);
       }
       return res.status(StatusCode.OK).json(session);
     } else if (req.method === "POST") {
       // Upsert session by shop domain
       const data = req.body;
       if (!data || !data.id || !data.shop) {
-        return res
-          .status(StatusCode.BAD_REQUEST)
-          .json(new ApiResponse(false, "Missing session data (id, shop)."));
+        throw new AppError(
+          "Missing session data (id, shop).",
+          StatusCode.BAD_REQUEST,
+        );
       }
       const updated = await shopifySession.findOneAndUpdate(
         { shop: data.shop },
@@ -344,49 +251,43 @@ export const handleOfflineSession = async (req: Request, res: Response) => {
       // Delete session by shop domain
       const deleted = await shopifySession.findOneAndDelete({ shop });
       if (!deleted) {
-        return res
-          .status(StatusCode.NOT_FOUND)
-          .json(new ApiResponse(false, "Session not found to delete."));
+        throw new AppError(
+          "Session not found to delete.",
+          StatusCode.NOT_FOUND,
+        );
       }
       return res
         .status(StatusCode.OK)
         .json(new ApiResponse(true, "Session deleted.", deleted));
     } else {
-      return res
-        .status(StatusCode.BAD_REQUEST)
-        .json(new ApiResponse(false, "Unsupported method."));
+      throw new AppError("Unsupported method.", StatusCode.BAD_REQUEST);
     }
-  } catch (error) {
-    return res
-      .status(StatusCode.INTERNAL_SERVER_ERROR)
-      .json(new ApiResponse(false, "Internal server error"));
-  }
-};
+  },
+);
 
 // Handle GET, POST, DELETE for /api/phone/:id (Shopify session storage)
-export const handleSessionById = async (req: Request, res: Response) => {
-  const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  // Only handle if id is NOT a valid ObjectId (to avoid conflict with phone routes)
-  if (mongoose.Types.ObjectId.isValid(id)) {
-    return res
-      .status(StatusCode.BAD_REQUEST)
-      .json(new ApiResponse(false, "Not a session id route."));
-  }
-  try {
+export const handleSessionById = asyncHandler(
+  async (req: Request, res: Response) => {
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+
+    // Only handle if id is NOT a valid ObjectId (to avoid conflict with phone routes)
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      throw new AppError("Not a session id route.", StatusCode.BAD_REQUEST);
+    }
+
     if (req.method === "GET") {
       const session = await shopifySession.findOne({ id });
       if (!session) {
-        return res
-          .status(StatusCode.NOT_FOUND)
-          .json(new ApiResponse(false, "Session not found."));
+        throw new AppError("Session not found.", StatusCode.NOT_FOUND);
       }
       return res.status(StatusCode.OK).json(session);
     } else if (req.method === "POST") {
       const data = req.body;
       if (!data || !data.id || !data.shop) {
-        return res
-          .status(StatusCode.BAD_REQUEST)
-          .json(new ApiResponse(false, "Missing session data (id, shop)"));
+        throw new AppError(
+          "Missing session data (id, shop)",
+          StatusCode.BAD_REQUEST,
+        );
       }
       const updated = await shopifySession.findOneAndUpdate(
         { id: data.id },
@@ -397,24 +298,19 @@ export const handleSessionById = async (req: Request, res: Response) => {
     } else if (req.method === "DELETE") {
       const deleted = await shopifySession.findOneAndDelete({ id });
       if (!deleted) {
-        return res
-          .status(StatusCode.NOT_FOUND)
-          .json(new ApiResponse(false, "Session not found to delete."));
+        throw new AppError(
+          "Session not found to delete.",
+          StatusCode.NOT_FOUND,
+        );
       }
       return res
         .status(StatusCode.OK)
         .json(new ApiResponse(true, "Session deleted.", deleted));
     } else {
-      return res
-        .status(StatusCode.BAD_REQUEST)
-        .json(new ApiResponse(false, "Unsupported method."));
+      throw new AppError("Unsupported method.", StatusCode.BAD_REQUEST);
     }
-  } catch (error) {
-    return res
-      .status(StatusCode.INTERNAL_SERVER_ERROR)
-      .json(new ApiResponse(false, "Internal server error"));
-  }
-};
+  },
+);
 
 // This function runs in the background and only needs the 'shop' domain.
 export const uninstallCleanupBackground = async (shop: string) => {
@@ -450,19 +346,17 @@ export const uninstallCleanupBackground = async (shop: string) => {
 };
 
 // Uninstall cleanup: set accessToken to null for a shop instead of deleting records
-export const uninstallCleanup = async (req: Request, res: Response) => {
-  try {
+export const uninstallCleanup = asyncHandler(
+  async (req: Request, res: Response) => {
     const apiKey = req.headers["x-api-key"];
     if (apiKey !== process.env.BACKEND_API_KEY) {
       console.warn("⚠️ Unauthorized uninstallCleanup attempt from IP:", req.ip);
-      return res.status(401).json({ success: false, message: "Unauthorized" });
+      throw new AppError("Unauthorized", StatusCode.UNAUTHORIZED);
     }
 
     const { shop } = req.body;
     if (!shop) {
-      return res
-        .status(StatusCode.BAD_REQUEST)
-        .json(new ApiResponse(false, "Missing shop domain."));
+      throw new AppError("Missing shop domain.", StatusCode.BAD_REQUEST);
     }
 
     // Find the session for this shop
@@ -493,17 +387,12 @@ export const uninstallCleanup = async (req: Request, res: Response) => {
           sessionDoc,
         ),
       );
-  } catch (error) {
-    console.error("❌ Error in uninstallCleanup:", error);
-    return res
-      .status(StatusCode.INTERNAL_SERVER_ERROR)
-      .json(new ApiResponse(false, "Internal server error"));
-  }
-};
+  },
+);
 
 // Public API for storefront theme - get USP bar data by shop domain
-export const getPublicUspSlider = async (req: Request, res: Response) => {
-  try {
+export const getPublicUspSlider = asyncHandler(
+  async (req: Request, res: Response) => {
     const shopParam = Array.isArray(req.params.shop)
       ? req.params.shop[0]
       : req.params.shop;
@@ -518,9 +407,7 @@ export const getPublicUspSlider = async (req: Request, res: Response) => {
     console.log("🌐 Public API - Shop formatted:", shop);
 
     if (!shop) {
-      return res
-        .status(StatusCode.BAD_REQUEST)
-        .json(new ApiResponse(false, "Missing shop domain."));
+      throw new AppError("Missing shop domain.", StatusCode.BAD_REQUEST);
     }
 
     // Find the session for this shop
@@ -567,10 +454,5 @@ export const getPublicUspSlider = async (req: Request, res: Response) => {
     return res
       .status(StatusCode.OK)
       .json(new ApiResponse(true, "USP Bar retrieved successfully.", response));
-  } catch (error) {
-    console.error("❌ Error in getPublicUspSlider:", error);
-    return res
-      .status(StatusCode.INTERNAL_SERVER_ERROR)
-      .json(new ApiResponse(false, "Internal server error"));
-  }
-};
+  },
+);

@@ -3,8 +3,10 @@ import axios from "axios";
 import crypto from "crypto";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-import { StatusCode } from "@shopify/shopify-api";
+import { StatusCode } from "../utils/status-code.js";
 import { ApiResponse } from "../utils/api-response.js";
+import { asyncHandler } from "../utils/async-handler.js";
+import { AppError } from "../utils/app-error.js";
 const router = express.Router();
 dotenv.config({ path: [".env"] });
 const shopifyApiKey = process.env.SHOPIFY_API_KEY;
@@ -16,24 +18,19 @@ router.get("/install", (req, res) => {
     const { shop } = req.query;
     if (!shop)
         return res
-            .status(StatusCode.BadRequest)
+            .status(StatusCode.BAD_REQUEST)
             .json(new ApiResponse(false, "Missing shop param"));
     const redirectUri = `${shopifyAppUrl}/api/shopify/callback`;
     const installUrl = `https://${shop}/admin/oauth/authorize?client_id=${shopifyApiKey}&scope=${shopifyScopes}&redirect_uri=${redirectUri}`;
     res.redirect(installUrl);
 });
 // Step 2: Handle OAuth callback
-router.get("/callback", async (req, res) => {
+router.get("/callback", asyncHandler(async (req, res) => {
     const { shop, hmac, code } = req.query;
     if (!shop || !hmac || !code)
-        return res
-            .status(StatusCode.BadRequest)
-            .json(new ApiResponse(false, "Missing params"));
-    if (!shopifyApiSecret) {
-        return res
-            .status(StatusCode.InternalServerError)
-            .json(new ApiResponse(false, "Shopify API secret is not configured"));
-    }
+        throw new AppError("Missing params", StatusCode.BAD_REQUEST);
+    if (!shopifyApiSecret)
+        throw new AppError("Shopify API secret is not configured", StatusCode.INTERNAL_SERVER_ERROR);
     // HMAC validation
     const params = { ...req.query };
     delete params["hmac"];
@@ -46,35 +43,26 @@ router.get("/callback", async (req, res) => {
         .update(message)
         .digest("hex");
     if (generatedHmac !== hmac)
-        return res
-            .status(StatusCode.BadRequest)
-            .json(new ApiResponse(false, "HMAC validation failed"));
+        throw new AppError("HMAC validation failed", StatusCode.BAD_REQUEST);
     // Exchange code for access token
-    try {
-        const tokenRes = await axios.post(`https://${shop}/admin/oauth/access_token`, {
-            client_id: shopifyApiKey,
-            client_secret: shopifyApiSecret,
-            code,
-        });
-        const { access_token, scope } = tokenRes.data;
-        // Store session in DB (pseudo-code, adapt to your model)
-        // Upsert by shop domain
-        await mongoose.connection.collection("shopify_sessions").updateOne({ shop }, {
-            $set: {
-                shop,
-                accessToken: access_token,
-                scope,
-                isOnline: false,
-            },
-        }, { upsert: true });
-        // Redirect to your app (embedded)
-        res.redirect(`https://${shop}/admin/apps/${shopifyApiKey}?shop=${shop}`);
-    }
-    catch (err) {
-        res
-            .status(StatusCode.InternalServerError)
-            .json(new ApiResponse(false, "Failed to get access token"));
-    }
-});
+    const tokenRes = await axios.post(`https://${shop}/admin/oauth/access_token`, {
+        client_id: shopifyApiKey,
+        client_secret: shopifyApiSecret,
+        code,
+    });
+    const { access_token, scope } = tokenRes.data;
+    // Store session in DB (pseudo-code, adapt to your model)
+    // Upsert by shop domain
+    await mongoose.connection.collection("shopify_sessions").updateOne({ shop }, {
+        $set: {
+            shop,
+            accessToken: access_token,
+            scope,
+            isOnline: false,
+        },
+    }, { upsert: true });
+    // Redirect to your app (embedded)
+    res.redirect(`https://${shop}/admin/apps/${shopifyApiKey}?shop=${shop}`);
+}));
 export default router;
 //# sourceMappingURL=shopify-auth.routes.js.map
