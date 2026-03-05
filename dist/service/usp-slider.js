@@ -36,7 +36,8 @@ export const getAllUsp = async (filter = {}) => {
         mongoFilter.$or = [{ enabled: true }, { enabled: { $exists: false } }];
         delete mongoFilter.enabled;
     }
-    return await UspSlider.find(mongoFilter).sort({ createdAt: -1 });
+    //.sort({ createdAt: -1 })
+    return await UspSlider.find(mongoFilter);
 };
 // Get by id
 export const getUspById = async (id) => {
