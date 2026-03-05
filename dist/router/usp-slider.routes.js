@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { uspSliderSchema } from "../validation/usp-slider-validation.js";
-import { createUspSlider, deleteUspSliderById, getAllUspSlider, getCurrentShopifySessionId, getUspSliderById, handleOfflineSession, handleSessionById, uninstallCleanup, updateUspSliderById, getPublicUspSlider, toggleUspSliderEnabled, } from "../controller/usp-slider.js";
+import { createUspSlider, deleteUspSliderById, getAllUspSlider, getCurrentShopifySessionId, getUspSliderById, handleOfflineSession, handleSessionById, uninstallCleanup, updateUspSliderById, getPublicUspSlider, toggleUspSliderEnabled, setGlobalColorSettings, getGlobalColorSettings, deleteGlobalColorSettings, } from "../controller/usp-slider.js";
 import { validate } from "../middleware/validate.js";
 import { validateShopifyHeader } from "../middleware/auth.js";
 const router = Router();
@@ -24,6 +24,10 @@ router.get("/session/current/shop", getCurrentShopifySessionId);
 router.get("/public/:shop", getPublicUspSlider);
 // Apply shopify header check for all below route
 router.use(validateShopifyHeader);
+// Global color settings routes
+router.post("/global-colors", setGlobalColorSettings);
+router.get("/global-colors", getGlobalColorSettings);
+router.delete("/global-colors", deleteGlobalColorSettings);
 // Create
 router.post("/add", validate(uspSliderSchema), createUspSlider);
 // Get All
