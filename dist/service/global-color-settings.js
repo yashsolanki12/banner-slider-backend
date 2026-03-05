@@ -3,7 +3,7 @@ import { GlobalColorSettings } from "../models/global-color-settings.js";
 // Create or update global color settings
 export const setGlobalColorSettings = async (shopify_session_id, colors) => {
     const sessionId = new mongoose.Types.ObjectId(shopify_session_id);
-    const globalSettings = await GlobalColorSettings.findOneAndUpdate({ shopify_session_id: sessionId }, { $set: colors }, { upsert: true, new: true });
+    const globalSettings = await GlobalColorSettings.findOneAndUpdate({ shopify_session_id: sessionId }, { $set: colors }, { upsert: true, returnDocument: "after" });
     return globalSettings;
 };
 // Get global color settings by shopify session id

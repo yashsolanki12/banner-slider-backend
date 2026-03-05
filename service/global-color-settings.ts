@@ -21,7 +21,7 @@ export const setGlobalColorSettings = async (
   const globalSettings = await GlobalColorSettings.findOneAndUpdate(
     { shopify_session_id: sessionId },
     { $set: colors },
-    { upsert: true, new: true },
+    { upsert: true, returnDocument: "after" },
   );
 
   return globalSettings;
