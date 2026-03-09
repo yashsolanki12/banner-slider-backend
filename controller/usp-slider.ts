@@ -599,10 +599,19 @@ export const getGlobalColorSettings = asyncHandler(
       sessionDoc._id.toString(),
     );
 
+    // Return default color settings if none exist for this store
     if (!response) {
+      const defaultSettings =
+        globalColorSettingsService.getDefaultColorSettings();
       return res
         .status(StatusCode.OK)
-        .json(new ApiResponse(false, "No global color settings found.", null));
+        .json(
+          new ApiResponse(
+            true,
+            "Default global color settings retrieved successfully.",
+            defaultSettings,
+          ),
+        );
     }
 
     return res
