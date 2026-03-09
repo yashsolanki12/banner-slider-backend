@@ -1,5 +1,20 @@
 import mongoose from "mongoose";
 import { GlobalColorSettings } from "../models/global-color-settings.js";
+// Default color settings for any store
+const DEFAULT_COLOR_SETTINGS = {
+    backgroundColor: "#f8f9fa",
+    titleColor: "#333333",
+    descriptionColor: "#666666",
+    iconBackgroundColor: "#4CAF50",
+    iconColor: "#ffffff",
+    itemBorderRightColor: "#000000",
+    itemBackgroundColor: "#ffffff",
+    slideSpeed: 4,
+};
+// Get default color settings
+export const getDefaultColorSettings = () => {
+    return { ...DEFAULT_COLOR_SETTINGS };
+};
 // Create or update global color settings
 export const setGlobalColorSettings = async (shopify_session_id, colors) => {
     const sessionId = new mongoose.Types.ObjectId(shopify_session_id);
@@ -21,8 +36,10 @@ export const deleteGlobalColorSettings = async (shopify_session_id) => {
 // Get global colors as plain object (for applying to list items)
 export const getGlobalColorsPlain = async (shopify_session_id) => {
     const settings = await getGlobalColorSettings(shopify_session_id);
-    if (!settings)
-        return null;
+    // Return default color settings if none exist for this store
+    if (!settings) {
+        return getDefaultColorSettings();
+    }
     return {
         itemBorderRightColor: settings.itemBorderRightColor,
         backgroundColor: settings.backgroundColor,
