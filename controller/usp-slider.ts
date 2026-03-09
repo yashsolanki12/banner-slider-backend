@@ -111,17 +111,39 @@ export const getAllUspSlider = asyncHandler(
     );
 
     // If global colors are set, apply them to each item's designSettings
+    // BUT only apply global colors as fallback for fields NOT explicitly set by user
     let finalResponse = response;
     if (globalColors) {
-      console.log("🎨 Applying global colors to list items");
+      console.log("🎨 Applying global colors to list items as fallback");
       finalResponse = response.map((item) => {
-        // Create a new object with merged designSettings
+        // Only apply global colors for fields that are NOT explicitly set in the item
+        // This preserves user's custom color overrides
+        const mergedDesignSettings = {
+          backgroundColor:
+            item.designSettings?.backgroundColor ??
+            globalColors.backgroundColor,
+          itemBackgroundColor:
+            item.designSettings?.itemBackgroundColor ??
+            globalColors.itemBackgroundColor,
+          titleColor:
+            item.designSettings?.titleColor ?? globalColors.titleColor,
+          descriptionColor:
+            item.designSettings?.descriptionColor ??
+            globalColors.descriptionColor,
+          iconBackgroundColor:
+            item.designSettings?.iconBackgroundColor ??
+            globalColors.iconBackgroundColor,
+          iconColor: item.designSettings?.iconColor ?? globalColors.iconColor,
+          slideSpeed:
+            item.designSettings?.slideSpeed ?? globalColors.slideSpeed,
+          itemBorderRightColor:
+            item.designSettings?.itemBorderRightColor ??
+            globalColors.itemBorderRightColor,
+        };
+
         const updatedItem = {
           ...item.toObject(),
-          designSettings: {
-            ...item.designSettings,
-            ...globalColors,
-          },
+          designSettings: mergedDesignSettings,
         };
         return updatedItem;
       });
@@ -150,9 +172,64 @@ export const getUspSliderById = asyncHandler(
       throw new AppError("USP Bar not found.", StatusCode.NOT_FOUND);
     }
 
+    // Get shop domain from header to find the session
+    const shopDomain = res.req.headers["x-shopify-shop-domain"] as string;
+
+    let finalResponse = response;
+
+    // Apply global color settings if shop domain is available
+    if (shopDomain) {
+      const sessionDoc = await mongoose.connection
+        .collection("shopify_sessions")
+        .findOne({ shop: shopDomain });
+
+      if (sessionDoc && sessionDoc._id) {
+        // Get global color settings to apply
+        const globalColors =
+          await globalColorSettingsService.getGlobalColorsPlain(
+            sessionDoc._id.toString(),
+          );
+
+        // Apply global colors as fallback for fields NOT explicitly set in the item
+        if (globalColors) {
+          console.log(
+            "🎨 Applying global colors to edit page item as fallback",
+          );
+          finalResponse = {
+            ...response.toObject(),
+            designSettings: {
+              backgroundColor:
+                response.designSettings?.backgroundColor ??
+                globalColors.backgroundColor,
+              itemBackgroundColor:
+                response.designSettings?.itemBackgroundColor ??
+                globalColors.itemBackgroundColor,
+              titleColor:
+                response.designSettings?.titleColor ?? globalColors.titleColor,
+              descriptionColor:
+                response.designSettings?.descriptionColor ??
+                globalColors.descriptionColor,
+              iconBackgroundColor:
+                response.designSettings?.iconBackgroundColor ??
+                globalColors.iconBackgroundColor,
+              iconColor:
+                response.designSettings?.iconColor ?? globalColors.iconColor,
+              slideSpeed:
+                response.designSettings?.slideSpeed ?? globalColors.slideSpeed,
+              itemBorderRightColor:
+                response.designSettings?.itemBorderRightColor ??
+                globalColors.itemBorderRightColor,
+            },
+          };
+        }
+      }
+    }
+
     return res
       .status(StatusCode.OK)
-      .json(new ApiResponse(true, "USP Bar retrieved successfully.", response));
+      .json(
+        new ApiResponse(true, "USP Bar retrieved successfully.", finalResponse),
+      );
   },
 );
 
@@ -184,6 +261,8 @@ export const updateUspSliderById = asyncHandler(
       throw new AppError("USP Bar not found.", StatusCode.NOT_FOUND);
     }
 
+    // Return the updated response directly - user's updated values should persist
+    // (not overwritten by global color settings)
     return res
       .status(StatusCode.OK)
       .json(new ApiResponse(true, "USP Bar updated successfully.", response));
@@ -481,18 +560,37 @@ export const getPublicUspSlider = asyncHandler(
       sessionDoc._id.toString(),
     );
 
-    // If global colors are set, apply them to each item's designSettings
+    // Apply global colors as fallback for fields NOT explicitly set in the item
     let finalResponse = response;
     if (globalColors) {
-      console.log("🎨 Applying global colors to public items");
+      console.log("🎨 Applying global colors to public items as fallback");
       finalResponse = response.map((item) => {
-        // Create a new object with merged designSettings
+        const mergedDesignSettings = {
+          backgroundColor:
+            item.designSettings?.backgroundColor ??
+            globalColors.backgroundColor,
+          itemBackgroundColor:
+            item.designSettings?.itemBackgroundColor ??
+            globalColors.itemBackgroundColor,
+          titleColor:
+            item.designSettings?.titleColor ?? globalColors.titleColor,
+          descriptionColor:
+            item.designSettings?.descriptionColor ??
+            globalColors.descriptionColor,
+          iconBackgroundColor:
+            item.designSettings?.iconBackgroundColor ??
+            globalColors.iconBackgroundColor,
+          iconColor: item.designSettings?.iconColor ?? globalColors.iconColor,
+          slideSpeed:
+            item.designSettings?.slideSpeed ?? globalColors.slideSpeed,
+          itemBorderRightColor:
+            item.designSettings?.itemBorderRightColor ??
+            globalColors.itemBorderRightColor,
+        };
+
         const updatedItem = {
           ...item.toObject(),
-          designSettings: {
-            ...item.designSettings,
-            ...globalColors,
-          },
+          designSettings: mergedDesignSettings,
         };
         return updatedItem;
       });
