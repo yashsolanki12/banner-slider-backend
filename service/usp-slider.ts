@@ -25,6 +25,7 @@ export const createUsp = async (
   > & {
     designSettings?: Partial<DesignSettings>;
     enabled?: boolean;
+    useCustomColorSettings?: boolean;
   },
 ): Promise<UspSliderDocument> => {
   return await UspSlider.create({
@@ -33,6 +34,7 @@ export const createUsp = async (
     shopify_session_id: data.shopify_session_id,
     enabled: data.enabled ?? true,
     icon: data.icon,
+    useCustomColorSettings: data.useCustomColorSettings ?? false,
     designSettings: {
       ...defaultDesignSettings,
       ...data.designSettings,
@@ -74,6 +76,7 @@ export const updateUspById = async (
   data: Pick<UspSliderDocument, "title" | "description" | "icon"> & {
     designSettings?: Partial<DesignSettings>;
     enabled?: boolean;
+    useCustomColorSettings?: boolean;
   },
 ): Promise<UspSliderDocument | null> => {
   const updateData: any = {
@@ -91,6 +94,10 @@ export const updateUspById = async (
 
   if (data.enabled !== undefined) {
     updateData.enabled = data.enabled;
+  }
+
+  if (data.useCustomColorSettings !== undefined) {
+    updateData.useCustomColorSettings = data.useCustomColorSettings;
   }
 
   return await UspSlider.findByIdAndUpdate(id, updateData, { new: true });
