@@ -42,8 +42,14 @@ export const getCurrentShopifySessionId = asyncHandler(
 // Create
 export const createUspSlider = asyncHandler(
   async (req: Request, res: Response) => {
-    const { title, description, shopify_session_id, designSettings, icon } =
-      req.body;
+    const {
+      title,
+      description,
+      shopify_session_id,
+      designSettings,
+      icon,
+      useCustomColorSettings,
+    } = req.body;
 
     if (!title || !description || !shopify_session_id) {
       throw new AppError(
@@ -58,6 +64,7 @@ export const createUspSlider = asyncHandler(
       shopify_session_id,
       designSettings,
       icon,
+      useCustomColorSettings,
     });
 
     if (!response) {
@@ -143,10 +150,17 @@ export const getAllUspSlider = asyncHandler(
 
         const updatedItem = {
           ...item.toObject(),
+          useCustomColorSettings: item.useCustomColorSettings ?? false,
           designSettings: mergedDesignSettings,
         };
         return updatedItem;
       });
+    } else {
+      // Even without global colors, ensure useCustomColorSettings is included
+      finalResponse = response.map((item) => ({
+        ...item.toObject(),
+        useCustomColorSettings: item.useCustomColorSettings ?? false,
+      }));
     }
 
     return res
@@ -197,6 +211,7 @@ export const getUspSliderById = asyncHandler(
           );
           finalResponse = {
             ...response.toObject(),
+            useCustomColorSettings: response.useCustomColorSettings ?? false,
             designSettings: {
               backgroundColor:
                 response.designSettings?.backgroundColor ??
@@ -221,6 +236,12 @@ export const getUspSliderById = asyncHandler(
                 globalColors.itemBorderRightColor,
             },
           };
+        } else {
+          // Even without global colors, ensure useCustomColorSettings is included
+          finalResponse = {
+            ...response.toObject(),
+            useCustomColorSettings: response.useCustomColorSettings ?? false,
+          };
         }
       }
     }
@@ -237,7 +258,8 @@ export const getUspSliderById = asyncHandler(
 export const updateUspSliderById = asyncHandler(
   async (req: Request, res: Response) => {
     const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-    const { title, description, designSettings, icon } = req.body;
+    const { title, description, designSettings, icon, useCustomColorSettings } =
+      req.body;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new AppError("Invalid USP Bar ID format.", StatusCode.BAD_REQUEST);
@@ -255,6 +277,7 @@ export const updateUspSliderById = asyncHandler(
       description,
       designSettings,
       icon,
+      useCustomColorSettings,
     });
 
     if (!response) {
