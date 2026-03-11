@@ -6,6 +6,7 @@ import * as uspSliderService from "../service/usp-slider.js";
 import * as globalColorSettingsService from "../service/global-color-settings.js";
 import mongoose from "mongoose";
 import shopifySession from "../models/shopify-session.js";
+import { UspSlider } from "../models/usp-slider.js";
 // Get current shopify_session_id
 export const getCurrentShopifySessionId = asyncHandler(async (req, res) => {
     const shopDomain = req.headers["x-shopify-shop-domain"];
@@ -463,6 +464,48 @@ export const setGlobalColorSettings = asyncHandler(async (req, res) => {
         throw new AppError("At least one color field is required.", StatusCode.BAD_REQUEST);
     }
     const response = await globalColorSettingsService.setGlobalColorSettings(sessionDoc._id.toString(), filteredColors);
+    // Update all USP slider records that don't have custom color settings
+    // (i.e., records where useCustomColorSettings is false or not set)
+    // Only update the fields that were provided in the request
+    const sessionId = sessionDoc._id;
+    const updateFields = {};
+    if (backgroundColor !== undefined) {
+        updateFields["designSettings.backgroundColor"] = backgroundColor;
+    }
+    if (titleColor !== undefined) {
+        updateFields["designSettings.titleColor"] = titleColor;
+    }
+    if (descriptionColor !== undefined) {
+        updateFields["designSettings.descriptionColor"] = descriptionColor;
+    }
+    if (iconBackgroundColor !== undefined) {
+        updateFields["designSettings.iconBackgroundColor"] = iconBackgroundColor;
+    }
+    if (iconColor !== undefined) {
+        updateFields["designSettings.iconColor"] = iconColor;
+    }
+    if (itemBorderRightColor !== undefined) {
+        updateFields["designSettings.itemBorderRightColor"] =
+            itemBorderRightColor;
+    }
+    if (itemBackgroundColor !== undefined) {
+        updateFields["designSettings.itemBackgroundColor"] = itemBackgroundColor;
+    }
+    if (slideSpeed !== undefined) {
+        updateFields["designSettings.slideSpeed"] = slideSpeed;
+    }
+    // Only run updateMany if there are fields to update
+    if (Object.keys(updateFields).length > 0) {
+        await UspSlider.updateMany({
+            shopify_session_id: sessionId,
+            $or: [
+                { useCustomColorSettings: { $exists: false } },
+                { useCustomColorSettings: false },
+            ],
+        }, {
+            $set: updateFields,
+        });
+    }
     return res
         .status(StatusCode.OK)
         .json(new ApiResponse(true, "Global color settings saved successfully.", response));
