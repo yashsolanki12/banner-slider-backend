@@ -102,8 +102,20 @@ app.post(
   },
 );
 
-// Middleware
-app.use(express.json());
+// Middleware - Limit to 5MB to handle 2MB images with base64 encoding overhead (~37%)
+app.use(express.json({ limit: "5mb" }));
+
+// Handle payload too large errors
+app.use((err: any, _req: any, res: any, next: any) => {
+  if (err.type === "entity.parse.failed" || err.status === 413) {
+    return res.status(413).json({
+      success: false,
+      message:
+        "Request payload too large. Please reduce image size to under 2MB.",
+    });
+  }
+  next(err);
+});
 app.use(cookieParse());
 app.use(express.urlencoded({ extended: true }));
 
