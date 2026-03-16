@@ -4,7 +4,8 @@ import { Schema, model } from "mongoose";
 const uspSliderSchema = new Schema<UspSliderDocument>(
   {
     title: { type: String, required: true },
-    description: { type: String, required: true },
+    // description: { type: String, required: true },
+    description: { type: String, required: false },
     shopify_session_id: {
       type: Schema.Types.ObjectId,
       ref: "ShopifySession",

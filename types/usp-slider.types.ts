@@ -13,7 +13,7 @@ export interface DesignSettings {
 
 export interface UspSliderDocument extends Document {
   title: string;
-  description: string;
+  description?: string;
   shopify_session_id?: Types.ObjectId;
   designSettings: DesignSettings;
   useCustomColorSettings: boolean;
