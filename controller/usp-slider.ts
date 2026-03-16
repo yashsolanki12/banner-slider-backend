@@ -52,9 +52,9 @@ export const createUspSlider = asyncHandler(
       useCustomColorSettings,
     } = req.body;
 
-    if (!title || !description || !shopify_session_id) {
+    if (!title || !shopify_session_id) {
       throw new AppError(
-        "Title, description and shopify_session_id are required.",
+        "Title, shopify_session_id are required.",
         StatusCode.BAD_REQUEST,
       );
     }
@@ -266,11 +266,8 @@ export const updateUspSliderById = asyncHandler(
       throw new AppError("Invalid USP Bar ID format.", StatusCode.BAD_REQUEST);
     }
 
-    if (!title || !description) {
-      throw new AppError(
-        "Title, description are required.",
-        StatusCode.BAD_REQUEST,
-      );
+    if (!title) {
+      throw new AppError("Title is required.", StatusCode.BAD_REQUEST);
     }
 
     const response = await uspSliderService.updateUspById(id, {
