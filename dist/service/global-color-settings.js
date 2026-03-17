@@ -6,7 +6,7 @@ const DEFAULT_COLOR_SETTINGS = {
     titleColor: "#333333",
     descriptionColor: "#666666",
     iconBackgroundColor: "#4CAF50",
-    iconColor: "#ffffff",
+    iconColor: "#141414",
     itemBorderRightColor: "#000000",
     itemBackgroundColor: "#ffffff",
     slideSpeed: 4,

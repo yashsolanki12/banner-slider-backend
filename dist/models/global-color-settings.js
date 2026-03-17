@@ -10,7 +10,7 @@ const globalColorSettingsSchema = new Schema({
     titleColor: { type: String, default: "#333333" },
     descriptionColor: { type: String, default: "#666666" },
     iconBackgroundColor: { type: String, default: "#4CAF50" },
-    iconColor: { type: String, default: "#ffffff" },
+    iconColor: { type: String, default: "#070707" },
     itemBorderRightColor: { type: String, default: "#000000" },
     itemBackgroundColor: { type: String, default: "#ffffff" },
     slideSpeed: { type: Number, default: 4 },
