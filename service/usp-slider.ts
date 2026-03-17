@@ -12,7 +12,7 @@ const defaultDesignSettings: DesignSettings = {
   titleColor: "#333333",
   descriptionColor: "#666666",
   iconBackgroundColor: "#4CAF50",
-  iconColor: "#ffffff",
+  iconColor: "#0e0e0e",
   slideSpeed: 4,
   itemBorderRightColor: "#000000", // Default vertical border color (black)
 };
