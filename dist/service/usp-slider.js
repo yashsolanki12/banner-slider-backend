@@ -1,5 +1,6 @@
 import { UspSlider } from "../models/usp-slider.js";
 import mongoose from "mongoose";
+import { getGlobalColorsPlain } from "./global-color-settings.js";
 // Default design settings
 const defaultDesignSettings = {
     backgroundColor: "#f8f9fa",
@@ -13,6 +14,45 @@ const defaultDesignSettings = {
 };
 // Create new usp slider
 export const createUsp = async (data) => {
+    // Determine which color settings to use:
+    // - If useCustomColorSettings is true: use provided designSettings or default
+    // - If useCustomColorSettings is false/undefined AND global colors exist: use global colors
+    // - Otherwise: use default colors
+    let finalDesignSettings;
+    if (data.useCustomColorSettings === true) {
+        // User wants custom colors - use provided settings or defaults
+        finalDesignSettings = {
+            ...defaultDesignSettings,
+            ...data.designSettings,
+        };
+    }
+    else if (data.shopify_session_id) {
+        // User didn't check custom color settings - check for global colors first
+        try {
+            const globalColors = await getGlobalColorsPlain(data.shopify_session_id.toString());
+            // Use global colors as base (they include defaults if no global settings exist)
+            finalDesignSettings = {
+                ...defaultDesignSettings,
+                ...globalColors,
+                ...data.designSettings,
+            };
+        }
+        catch (error) {
+            // If error fetching global colors, fall back to defaults
+            console.error("Error fetching global colors, using defaults:", error);
+            finalDesignSettings = {
+                ...defaultDesignSettings,
+                ...data.designSettings,
+            };
+        }
+    }
+    else {
+        // No shopify_session_id, use defaults
+        finalDesignSettings = {
+            ...defaultDesignSettings,
+            ...data.designSettings,
+        };
+    }
     return await UspSlider.create({
         title: data.title,
         description: data.description,
@@ -20,10 +60,7 @@ export const createUsp = async (data) => {
         enabled: data.enabled ?? true,
         icon: data.icon,
         useCustomColorSettings: data.useCustomColorSettings ?? false,
-        designSettings: {
-            ...defaultDesignSettings,
-            ...data.designSettings,
-        },
+        designSettings: finalDesignSettings,
     });
 };
 // Get all usp slider
