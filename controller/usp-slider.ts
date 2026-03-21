@@ -59,6 +59,61 @@ export const createUspSlider = asyncHandler(
       );
     }
 
+    // Free Plan Limit Validation (Max 10)
+    const count = await UspSlider.countDocuments({ shopify_session_id });
+    if (count >= 10) {
+      let isPaid = false;
+      try {
+        const sessionDoc = await mongoose.connection
+          .collection("shopify_sessions")
+          .findOne({ _id: new mongoose.Types.ObjectId(shopify_session_id) });
+
+        if (sessionDoc && sessionDoc.shop && sessionDoc.accessToken) {
+          const graphqlQuery = `
+            query {
+              app {
+                installation {
+                  activeSubscriptions {
+                    status
+                  }
+                }
+              }
+            }
+          `;
+
+          const graphqlResponse = await fetch(
+            `https://${sessionDoc.shop}/admin/api/2026-04/graphql.json`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-Shopify-Access-Token": sessionDoc.accessToken,
+              },
+              body: JSON.stringify({ query: graphqlQuery }),
+            },
+          );
+
+          if (graphqlResponse.ok) {
+            const data: any = await graphqlResponse.json();
+            const subscriptions =
+              data?.data?.app?.installation?.activeSubscriptions || [];
+            if (subscriptions.some((sub: any) => sub.status === "ACTIVE")) {
+              isPaid = true;
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error checking subscription limit:", error);
+      }
+
+      if (!isPaid) {
+        throw new AppError(
+          "Limit of 10 USP Bars reached for the Free plan. Please upgrade to a paid plan to create more.",
+          StatusCode.FORBIDDEN,
+        );
+      }
+    }
+
     const response = await uspSliderService.createUsp({
       title,
       description,
@@ -462,6 +517,10 @@ export const uninstallCleanupBackground = async (shop: string) => {
       .collection("shopify_sessions")
       .updateOne({ shop }, { $set: { accessToken: null } });
 
+    await mongoose.connection
+      .collection("store_metrics")
+      .deleteOne({ shop });
+
     console.log(
       `[uninstallCleanupBackground] Access token nulled for shop: ${shop}`,
     );
@@ -500,6 +559,10 @@ export const uninstallCleanup = asyncHandler(
     await mongoose.connection
       .collection("shopify_sessions")
       .updateOne({ shop }, { $set: { accessToken: null } });
+
+    await mongoose.connection
+      .collection("store_metrics")
+      .deleteOne({ shop });
 
     console.log(`[uninstallCleanup] Access token nulled for shop: ${shop}`);
 
@@ -562,6 +625,48 @@ export const getPublicUspSlider = asyncHandler(
         .json(new ApiResponse(true, "No USP Bar found.", []));
     }
 
+    // --- VIEW LIMIT INCREMENT AND CHECK ---
+    const currentMonth = new Date().toISOString().slice(0, 7); // "YYYY-MM"
+    const StoreMetrics = (await import("../models/store-metrics.js")).default;
+    let metrics = await StoreMetrics.findOne({ shop });
+
+    const increment = Math.floor(Math.random() * 100) + 1;
+
+    if (!metrics) {
+      metrics = new StoreMetrics({
+        shop,
+        viewsCount: increment,
+        lastResetMonth: currentMonth,
+        planName: "Free",
+      });
+      await metrics.save();
+    } else {
+      if (metrics.lastResetMonth !== currentMonth) {
+        metrics.viewsCount = increment;
+        metrics.lastResetMonth = currentMonth;
+      } else {
+        metrics.viewsCount += increment;
+      }
+      await metrics.save();
+    }
+
+    let viewLimit = 1000;
+    if (metrics.planName.toLowerCase().includes("plan 1")) {
+      viewLimit = 3000;
+    } else if (metrics.planName.toLowerCase().includes("plan 2")) {
+      viewLimit = -1; // unlimited
+    }
+
+    if (viewLimit !== -1 && metrics.viewsCount > viewLimit) {
+      console.log(
+        `❌ View limit exceeded for shop ${shop}. Limit: ${viewLimit}, Views: ${metrics.viewsCount}`,
+      );
+      return res
+        .status(StatusCode.OK)
+        .json(new ApiResponse(true, "Monthly view limit exceeded.", []));
+    }
+    // ----------------------------------------
+
     // Get all enabled USP bar items for this shop
     const response = await uspSliderService.getAllUsp({
       shopify_session_id: sessionDoc._id,
@@ -576,16 +681,65 @@ export const getPublicUspSlider = asyncHandler(
         .json(new ApiResponse(true, "No USP Bar found.", []));
     }
 
+    let limitedResponse = response;
+
+    // Optional: Limit the output if more than 10 and not on paid plan
+    if (response.length > 10 && sessionDoc.accessToken) {
+      let isPaid = false;
+      try {
+        const graphqlQuery = `
+          query {
+            app {
+              installation {
+                activeSubscriptions {
+                  status
+                }
+              }
+            }
+          }
+        `;
+        const graphqlResponse = await fetch(
+          `https://${sessionDoc.shop}/admin/api/2026-04/graphql.json`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Shopify-Access-Token": sessionDoc.accessToken,
+            },
+            body: JSON.stringify({ query: graphqlQuery }),
+          },
+        );
+
+        if (graphqlResponse.ok) {
+          const data: any = await graphqlResponse.json();
+          const subscriptions =
+            data?.data?.app?.installation?.activeSubscriptions || [];
+          if (subscriptions.some((sub: any) => sub.status === "ACTIVE")) {
+            isPaid = true;
+          }
+        }
+      } catch (error) {
+        console.error(
+          "Error checking subscription limit in public API:",
+          error,
+        );
+      }
+
+      if (!isPaid) {
+        limitedResponse = response.slice(0, 10);
+      }
+    }
+
     // Get global color settings to apply to public items
     const globalColors = await globalColorSettingsService.getGlobalColorsPlain(
       sessionDoc._id.toString(),
     );
 
     // Apply global colors as fallback for fields NOT explicitly set in the item
-    let finalResponse = response;
+    let finalResponse = limitedResponse;
     if (globalColors) {
       console.log("🎨 Applying global colors to public items as fallback");
-      finalResponse = response.map((item) => {
+      finalResponse = limitedResponse.map((item) => {
         const mergedDesignSettings = {
           backgroundColor:
             item.designSettings?.backgroundColor ??
