@@ -10,6 +10,7 @@ import { isAllowedOrigin } from "./utils/allowed-origin.js";
 import { ApiResponse } from "./utils/api-response.js";
 import uspSliderRoutes from "./router/usp-slider.routes.js";
 import shopifyAuthRoutes from "./router/shopify-auth.routes.js";
+import storeMetricsRoutes from "./router/store-metrics.routes.js";
 import {
   uninstallCleanup,
 } from "./controller/usp-slider.js";
@@ -251,6 +252,9 @@ app.use("/api/usp-slider", uspSliderRoutes);
 
 // Routes for shopify authentication
 app.use("/api/shopify", shopifyAuthRoutes);
+
+// Routes for store metrics
+app.use("/api/store-metrics", storeMetricsRoutes);
 
 // Handle 404 - This must be after all other routes
 app.use((req, res) => {
