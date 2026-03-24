@@ -11,5 +11,6 @@ export var StatusCode;
     StatusCode[StatusCode["BAD_GATEWAY"] = 502] = "BAD_GATEWAY";
     StatusCode[StatusCode["SERVICE_UNAVAILABLE"] = 503] = "SERVICE_UNAVAILABLE";
     StatusCode[StatusCode["GATEWAY_TIMEOUT"] = 504] = "GATEWAY_TIMEOUT";
+    StatusCode[StatusCode["TOO_MANY_REQUESTS"] = 429] = "TOO_MANY_REQUESTS";
 })(StatusCode || (StatusCode = {}));
 //# sourceMappingURL=status-code.js.map
