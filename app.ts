@@ -10,6 +10,7 @@ import { isAllowedOrigin } from "./utils/allowed-origin.js";
 import { ApiResponse } from "./utils/api-response.js";
 import uspSliderRoutes from "./router/usp-slider.routes.js";
 import shopifyAuthRoutes from "./router/shopify-auth.routes.js";
+import storeMetricsRoutes from "./router/store-metrics.routes.js";
 import {
   uninstallCleanup,
 } from "./controller/usp-slider.js";
@@ -58,83 +59,7 @@ app.post(
   },
 );
 
-// 1
-// app.post(
-//   "/api/shopify/webhook",
-//   express.raw({ type: "*/*" }),
-//   async (req: any, res, next) => {
-//     const topic = req.get("X-Shopify-Topic");
-//     const shop = req.get("X-Shopify-Shop-Domain");
-//     const hmacHeader =
-//       req.get("X-Shopify-Hmac-Sha256") || req.get("x-shopify-hmac-sha256");
-
-//     const rawBody = req.body;
-
-//     const rawSecret = process.env.SHOPIFY_API_SECRET?.trim() || "";
-//     const cleanSecret = rawSecret.replace(/^["']|["']$/g, "");
-
-//     if (!cleanSecret || !hmacHeader || !rawBody) {
-//       console.error("❌ Missing critical data for webhook validation");
-//       return res.status(401).send("Missing data");
-//     }
-
-//     // Attempt verification with multiple variants if necessary
-//     const secretVariants = [
-//       cleanSecret,
-//       cleanSecret.replace("shpss_", ""), // Some configurations use prefixed secrets
-//     ];
-
-//     let verified = false;
-//     let fallbackGeneratedHmac = "";
-
-//     for (const variant of secretVariants) {
-//       const generatedHmac = crypto
-//         .createHmac("sha256", variant)
-//         .update(rawBody)
-//         .digest("base64");
-
-//       if (generatedHmac === hmacHeader) {
-//         verified = true;
-//         break;
-//       }
-//       fallbackGeneratedHmac = generatedHmac; // Keep one for logging
-//     }
-
-//     if (!verified) {
-//       console.error("❌ HMAC mismatch detected");
-//       console.log("Expected (Header):", hmacHeader);
-//       console.log("Calculated (Last):", fallbackGeneratedHmac);
-//       console.log("Body length:", rawBody.length);
-//       console.log("Secret length:", cleanSecret.length);
-//       return res.status(401).send("HMAC mismatch");
-//     }
-
-//     console.log("✅ HMAC verified successfully");
-
-//     try {
-//       const payload = JSON.parse(rawBody.toString());
-
-//       if (topic === "app/uninstalled") {
-//         console.log(`[Webhook] Processing uninstall for: ${shop}`);
-//         // Ensure the internal API key is present for the cleanup controller
-//         req.headers["x-api-key"] = process.env.BACKEND_API_KEY;
-//         req.body = { shop };
-//         await uninstallCleanup(req, res,next);
-//         return;
-//       }
-
-//       if (payload) {
-//         console.log("Payload:", payload);
-//       }
-//     } catch (e: any) {
-//       console.error("[Webhook] Parse error:", e.message);
-//     }
-
-//     res.status(200).send("OK");
-//   },
-// );
-
-// 2
+// Use this while Automated checks for common errors for HMAC and Uninstallation of App(✔)
 app.post(
   "/api/shopify/webhook",
   express.raw({ type: "*/*" }), // Capture EVERYTHING to be safe
@@ -327,6 +252,9 @@ app.use("/api/usp-slider", uspSliderRoutes);
 
 // Routes for shopify authentication
 app.use("/api/shopify", shopifyAuthRoutes);
+
+// Routes for store metrics
+app.use("/api/store-metrics", storeMetricsRoutes);
 
 // Handle 404 - This must be after all other routes
 app.use((req, res) => {

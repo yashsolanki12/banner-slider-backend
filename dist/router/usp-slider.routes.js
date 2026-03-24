@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { uspSliderSchema } from "../validation/usp-slider-validation.js";
-import { createUspSlider, deleteUspSliderById, getAllUspSlider, getCurrentShopifySessionId, getUspSliderById, handleOfflineSession, handleSessionById, uninstallCleanup, updateUspSliderById, getPublicUspSlider, toggleUspSliderEnabled, setGlobalColorSettings, getGlobalColorSettings, deleteGlobalColorSettings, } from "../controller/usp-slider.js";
+import { createUspSlider, deleteUspSliderById, getAllUspSlider, getCurrentShopifySessionId, getUspSliderById, handleOfflineSession, handleSessionById, uninstallCleanup, updateUspSliderById, getPublicUspSlider, toggleUspSliderEnabled, setGlobalColorSettings, getGlobalColorSettings, deleteGlobalColorSettings, duplicateUspBar, bulkDeleteUspSlider, bulkToggleUspSlider, } from "../controller/usp-slider.js";
 import { validate } from "../middleware/validate.js";
 import { validateShopifyHeader } from "../middleware/auth.js";
 const router = Router();
@@ -40,5 +40,10 @@ router.get("/:id", getUspSliderById);
 router.put("/:id", validate(uspSliderSchema), updateUspSliderById);
 // Delete
 router.delete("/:id", deleteUspSliderById);
+// Duplicate Usp Bar
+router.post("/duplicate/:id", duplicateUspBar);
+// Bulk operations
+router.post("/bulk-delete", bulkDeleteUspSlider);
+router.post("/bulk-toggle", bulkToggleUspSlider);
 export default router;
 //# sourceMappingURL=usp-slider.routes.js.map
