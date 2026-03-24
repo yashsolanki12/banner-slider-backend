@@ -420,6 +420,63 @@ export const handleSessionById = asyncHandler(async (req, res) => {
         throw new AppError("Unsupported method.", StatusCode.BAD_REQUEST);
     }
 });
+// This function runs in the background and only needs the 'shop' domain.
+export const uninstallCleanupBackground = async (shop) => {
+    try {
+        // No apiKey check needed here as it's an internal background process.
+        if (!shop) {
+            console.warn("[uninstallCleanupBackground] Missing shop domain.");
+            return;
+        }
+        // Perform your database operations:
+        const sessionDoc = await mongoose.connection
+            .collection("shopify_sessions")
+            .findOne({ shop });
+        if (!sessionDoc) {
+            console.log(`[uninstallCleanupBackground] No session found for shop: ${shop}`);
+            return;
+        }
+        await mongoose.connection
+            .collection("shopify_sessions")
+            .updateOne({ shop }, { $set: { accessToken: null } });
+        await mongoose.connection.collection("store_metrics").deleteOne({ shop });
+        console.log(`[uninstallCleanupBackground] Access token nulled for shop: ${shop}`);
+    }
+    catch (error) {
+        console.error("❌ Error in uninstallCleanupBackground:", error);
+    }
+};
+// Uninstall cleanup: set accessToken to null for a shop instead of deleting records
+export const uninstallCleanup = asyncHandler(async (req, res) => {
+    const apiKey = req.headers["x-api-key"];
+    if (apiKey !== process.env.BACKEND_API_KEY) {
+        console.warn("⚠️ Unauthorized uninstallCleanup attempt from IP:", req.ip);
+        throw new AppError("Unauthorized", StatusCode.UNAUTHORIZED);
+    }
+    const { shop } = req.body;
+    if (!shop) {
+        throw new AppError("Missing shop domain.", StatusCode.BAD_REQUEST);
+    }
+    // Find the session for this shop
+    const sessionDoc = await mongoose.connection
+        .collection("shopify_sessions")
+        .findOne({ shop });
+    if (!sessionDoc) {
+        console.log(`[uninstallCleanup] No session found for shop: ${shop}`);
+        return res
+            .status(StatusCode.OK)
+            .json(new ApiResponse(true, "No session to update."));
+    }
+    // Update only the accessToken to null to persist other data
+    await mongoose.connection
+        .collection("shopify_sessions")
+        .updateOne({ shop }, { $set: { accessToken: null } });
+    await mongoose.connection.collection("store_metrics").deleteOne({ shop });
+    console.log(`[uninstallCleanup] Access token nulled for shop: ${shop}`);
+    return res
+        .status(StatusCode.OK)
+        .json(new ApiResponse(true, "Session access token preserved as null.", sessionDoc));
+});
 // Public API for storefront theme - get USP bar data by shop domain
 export const getPublicUspSlider = asyncHandler(async (req, res) => {
     const shopParam = Array.isArray(req.params.shop)
@@ -459,7 +516,7 @@ export const getPublicUspSlider = asyncHandler(async (req, res) => {
     const currentMonth = new Date().toISOString().slice(0, 7); // "YYYY-MM"
     const StoreMetrics = (await import("../models/store-metrics.js")).default;
     let metrics = await StoreMetrics.findOne({ shop });
-    const increment = Math.floor(Math.random() * 10) + 1;
+    const increment = Math.floor(Math.random() * 8) + 1;
     if (!metrics) {
         metrics = new StoreMetrics({
             shop,
@@ -551,8 +608,7 @@ export const getPublicUspSlider = asyncHandler(async (req, res) => {
         console.log("🎨 Applying global colors to public items as fallback");
         finalResponse = limitedResponse.map((item) => {
             const mergedDesignSettings = {
-                backgroundColor: item.designSettings?.backgroundColor ??
-                    globalColors.backgroundColor,
+                backgroundColor: item.designSettings?.backgroundColor ?? globalColors.backgroundColor,
                 itemBackgroundColor: item.designSettings?.itemBackgroundColor ??
                     globalColors.itemBackgroundColor,
                 titleColor: item.designSettings?.titleColor ?? globalColors.titleColor,
@@ -576,40 +632,90 @@ export const getPublicUspSlider = asyncHandler(async (req, res) => {
         .status(StatusCode.OK)
         .json(new ApiResponse(true, "USP Bar retrieved successfully.", finalResponse));
 });
-// Global Color Settings Controllers
 // Set global color settings
 export const setGlobalColorSettings = asyncHandler(async (req, res) => {
-    const shopDomain = req.headers["x-shopify-shop-domain"];
+    const shopDomain = res.req.headers["x-shopify-shop-domain"];
+    console.log("🎨 Set global color settings - Shop Domain:", shopDomain);
     if (!shopDomain) {
         throw new AppError("Missing shop domain header.", StatusCode.BAD_REQUEST);
     }
+    // Find the session for this shop
     const sessionDoc = await mongoose.connection
         .collection("shopify_sessions")
         .findOne({ shop: shopDomain });
     if (!sessionDoc || !sessionDoc._id) {
         throw new AppError("Session not found.", StatusCode.NOT_FOUND);
     }
-    const { backgroundColor, itemBackgroundColor, titleColor, descriptionColor, iconBackgroundColor, iconColor, slideSpeed, itemBorderRightColor, } = req.body;
-    const response = await globalColorSettingsService.setGlobalColorSettings(sessionDoc._id.toString(), {
+    const { backgroundColor, titleColor, descriptionColor, iconBackgroundColor, iconColor, itemBorderRightColor, itemBackgroundColor, slideSpeed, } = req.body;
+    const colors = {
         backgroundColor,
-        itemBackgroundColor,
         titleColor,
         descriptionColor,
         iconBackgroundColor,
         iconColor,
-        slideSpeed,
         itemBorderRightColor,
-    });
+        itemBackgroundColor,
+        slideSpeed,
+    };
+    // Filter out undefined values
+    const filteredColors = Object.fromEntries(Object.entries(colors).filter(([_, v]) => v !== undefined));
+    if (Object.keys(filteredColors).length === 0) {
+        throw new AppError("At least one color field is required.", StatusCode.BAD_REQUEST);
+    }
+    const response = await globalColorSettingsService.setGlobalColorSettings(sessionDoc._id.toString(), filteredColors);
+    // Update all USP slider records that don't have custom color settings
+    // (i.e., records where useCustomColorSettings is false or not set)
+    // Only update the fields that were provided in the request
+    const sessionId = sessionDoc._id;
+    const updateFields = {};
+    if (backgroundColor !== undefined) {
+        updateFields["designSettings.backgroundColor"] = backgroundColor;
+    }
+    if (titleColor !== undefined) {
+        updateFields["designSettings.titleColor"] = titleColor;
+    }
+    if (descriptionColor !== undefined) {
+        updateFields["designSettings.descriptionColor"] = descriptionColor;
+    }
+    if (iconBackgroundColor !== undefined) {
+        updateFields["designSettings.iconBackgroundColor"] = iconBackgroundColor;
+    }
+    if (iconColor !== undefined) {
+        updateFields["designSettings.iconColor"] = iconColor;
+    }
+    if (itemBorderRightColor !== undefined) {
+        updateFields["designSettings.itemBorderRightColor"] = itemBorderRightColor;
+    }
+    if (itemBackgroundColor !== undefined) {
+        updateFields["designSettings.itemBackgroundColor"] = itemBackgroundColor;
+    }
+    if (slideSpeed !== undefined) {
+        updateFields["designSettings.slideSpeed"] = slideSpeed;
+    }
+    // Only run updateMany if there are fields to update
+    if (Object.keys(updateFields).length > 0) {
+        await UspSlider.updateMany({
+            shopify_session_id: sessionId,
+            $or: [
+                { useCustomColorSettings: { $exists: false } },
+                { useCustomColorSettings: false },
+            ],
+        }, {
+            $set: updateFields,
+        });
+    }
     return res
         .status(StatusCode.OK)
-        .json(new ApiResponse(true, "Global color settings updated successfully.", response));
+        .json(new ApiResponse(true, "Global color settings saved successfully.", response));
 });
 // Get global color settings
 export const getGlobalColorSettings = asyncHandler(async (_req, res) => {
     const shopDomain = res.req.headers["x-shopify-shop-domain"];
+    console.log("🎨 Get global color settings - Shop Domain:", shopDomain);
     if (!shopDomain) {
         throw new AppError("Missing shop domain header.", StatusCode.BAD_REQUEST);
     }
+    // Find the session for this shop
     const sessionDoc = await mongoose.connection
         .collection("shopify_sessions")
         .findOne({ shop: shopDomain });
@@ -617,6 +723,13 @@ export const getGlobalColorSettings = asyncHandler(async (_req, res) => {
         throw new AppError("Session not found.", StatusCode.NOT_FOUND);
     }
     const response = await globalColorSettingsService.getGlobalColorSettings(sessionDoc._id.toString());
+    // Return default color settings if none exist for this store
+    if (!response) {
+        const defaultSettings = globalColorSettingsService.getDefaultColorSettings();
+        return res
+            .status(StatusCode.OK)
+            .json(new ApiResponse(true, "Default global color settings retrieved successfully.", defaultSettings));
+    }
     return res
         .status(StatusCode.OK)
         .json(new ApiResponse(true, "Global color settings retrieved successfully.", response));
@@ -624,9 +737,11 @@ export const getGlobalColorSettings = asyncHandler(async (_req, res) => {
 // Delete global color settings
 export const deleteGlobalColorSettings = asyncHandler(async (_req, res) => {
     const shopDomain = res.req.headers["x-shopify-shop-domain"];
+    console.log("🎨 Delete global color settings - Shop Domain:", shopDomain);
     if (!shopDomain) {
         throw new AppError("Missing shop domain header.", StatusCode.BAD_REQUEST);
     }
+    // Find the session for this shop
     const sessionDoc = await mongoose.connection
         .collection("shopify_sessions")
         .findOne({ shop: shopDomain });
@@ -634,24 +749,13 @@ export const deleteGlobalColorSettings = asyncHandler(async (_req, res) => {
         throw new AppError("Session not found.", StatusCode.NOT_FOUND);
     }
     const response = await globalColorSettingsService.deleteGlobalColorSettings(sessionDoc._id.toString());
+    if (!response) {
+        return res
+            .status(StatusCode.OK)
+            .json(new ApiResponse(false, "No global color settings to delete.", null));
+    }
     return res
         .status(StatusCode.OK)
         .json(new ApiResponse(true, "Global color settings deleted successfully.", response));
-});
-// POST uninstall-cleanup to null the shop access token
-export const uninstallCleanup = asyncHandler(async (req, res) => {
-    const { shop } = req.body;
-    if (!shop) {
-        throw new AppError("Missing shop domain.", StatusCode.BAD_REQUEST);
-    }
-    const result = await mongoose.connection
-        .collection("shopify_sessions")
-        .findOneAndUpdate({ shop }, { $set: { accessToken: null } }, { returnDocument: "after" });
-    if (!result) {
-        throw new AppError("Session not found.", StatusCode.NOT_FOUND);
-    }
-    return res
-        .status(StatusCode.OK)
-        .json(new ApiResponse(true, "Access token cleared successfully.", result));
 });
 //# sourceMappingURL=usp-slider.js.map
