@@ -640,37 +640,203 @@ export const handleSessionById = asyncHandler(
   },
 );
 
-// Public API for storefront theme (no auth required)
+// Public API for storefront theme - get USP bar data by shop domain
 export const getPublicUspSlider = asyncHandler(
   async (req: Request, res: Response) => {
-    const shop = Array.isArray(req.params.shop)
+    const shopParam = Array.isArray(req.params.shop)
       ? req.params.shop[0]
       : req.params.shop;
+
+    // Handle both with and without .myshopify.com
+    let shop = shopParam;
+    if (!shop.includes(".myshopify.com")) {
+      shop = `${shop}.myshopify.com`;
+    }
+
+    console.log("🌐 Public API - Shop param:", shopParam);
+    console.log("🌐 Public API - Shop formatted:", shop);
 
     if (!shop) {
       throw new AppError("Missing shop domain.", StatusCode.BAD_REQUEST);
     }
 
-    const session = await shopifySession.findOne({ shop });
-    if (!session || !session._id) {
-      throw new AppError("Session not found.", StatusCode.NOT_FOUND);
+    // Find the session for this shop
+    const sessionDoc = await mongoose.connection
+      .collection("shopify_sessions")
+      .findOne({ shop });
+
+    console.log("🔍 Session found:", sessionDoc ? "Yes" : "No");
+    if (sessionDoc) {
+      console.log("🔍 Session _id:", sessionDoc._id);
     }
 
-    const uspSlider = await uspSliderService.getAllUsp({
-      shopify_session_id: session._id,
+    if (!sessionDoc || !sessionDoc._id) {
+      console.log("❌ Session not found for shop:", shop);
+      // Try to find all sessions to debug
+      const allSessions = await mongoose.connection
+        .collection("shopify_sessions")
+        .find({})
+        .toArray();
+      console.log(
+        "📋 All sessions shops:",
+        allSessions.map((s) => s.shop),
+      );
+
+      return res
+        .status(StatusCode.OK)
+        .json(new ApiResponse(true, "No USP Bar found.", []));
+    }
+
+    // --- VIEW LIMIT INCREMENT AND CHECK ---
+    const currentMonth = new Date().toISOString().slice(0, 7); // "YYYY-MM"
+    const StoreMetrics = (await import("../models/store-metrics.js")).default;
+    let metrics = await StoreMetrics.findOne({ shop });
+
+    const increment = Math.floor(Math.random() * 10) + 1;
+
+    if (!metrics) {
+      metrics = new StoreMetrics({
+        shop,
+        viewsCount: increment,
+        lastResetMonth: currentMonth,
+        planName: "Free",
+      });
+      await metrics.save();
+    } else {
+      if (metrics.lastResetMonth !== currentMonth) {
+        metrics.viewsCount = increment;
+        metrics.lastResetMonth = currentMonth;
+      } else {
+        metrics.viewsCount += increment;
+      }
+      await metrics.save();
+    }
+
+    let viewLimit = 1000;
+    if (metrics.planName.toLowerCase().includes("plan 1")) {
+      viewLimit = 3000;
+    } else if (metrics.planName.toLowerCase().includes("plan 2")) {
+      viewLimit = -1; // unlimited
+    }
+
+    if (viewLimit !== -1 && metrics.viewsCount > viewLimit) {
+      console.log(
+        `❌ View limit exceeded for shop ${shop}. Limit: ${viewLimit}, Views: ${metrics.viewsCount}`,
+      );
+      return res
+        .status(StatusCode.OK)
+        .json(new ApiResponse(true, "Monthly view limit exceeded.", []));
+    }
+    // ----------------------------------------
+
+    // Get all enabled USP bar items for this shop
+    const response = await uspSliderService.getAllUsp({
+      shopify_session_id: sessionDoc._id,
       enabled: true,
     });
 
-    if (!uspSlider || uspSlider.length === 0) {
+    console.log("📦 USP Bar items found:", response ? response.length : 0);
+
+    if (!response || response.length === 0) {
       return res
         .status(StatusCode.OK)
-        .json(new ApiResponse(false, "No active USP Bar found.", null));
+        .json(new ApiResponse(true, "No USP Bar found.", []));
+    }
+
+    let limitedResponse = response;
+
+    // Optional: Limit the output if more than 10 and not on paid plan
+    if (response.length > 10 && sessionDoc.accessToken) {
+      let isPaid = false;
+      try {
+        const graphqlQuery = `
+          query {
+            app {
+              installation {
+                activeSubscriptions {
+                  status
+                }
+              }
+            }
+          }
+        `;
+        const graphqlResponse = await fetch(
+          `https://${sessionDoc.shop}/admin/api/2026-04/graphql.json`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Shopify-Access-Token": sessionDoc.accessToken,
+            },
+            body: JSON.stringify({ query: graphqlQuery }),
+          },
+        );
+
+        if (graphqlResponse.ok) {
+          const data: any = await graphqlResponse.json();
+          const subscriptions =
+            data?.data?.app?.installation?.activeSubscriptions || [];
+          if (subscriptions.some((sub: any) => sub.status === "ACTIVE")) {
+            isPaid = true;
+          }
+        }
+      } catch (error) {
+        console.error(
+          "Error checking subscription limit in public API:",
+          error,
+        );
+      }
+
+      if (!isPaid) {
+        limitedResponse = response.slice(0, 10);
+      }
+    }
+
+    // Get global color settings to apply to public items
+    const globalColors = await globalColorSettingsService.getGlobalColorsPlain(
+      sessionDoc._id.toString(),
+    );
+
+    // Apply global colors as fallback for fields NOT explicitly set in the item
+    let finalResponse = limitedResponse;
+    if (globalColors) {
+      console.log("🎨 Applying global colors to public items as fallback");
+      finalResponse = limitedResponse.map((item) => {
+        const mergedDesignSettings = {
+          backgroundColor:
+            item.designSettings?.backgroundColor ??
+            globalColors.backgroundColor,
+          itemBackgroundColor:
+            item.designSettings?.itemBackgroundColor ??
+            globalColors.itemBackgroundColor,
+          titleColor:
+            item.designSettings?.titleColor ?? globalColors.titleColor,
+          descriptionColor:
+            item.designSettings?.descriptionColor ??
+            globalColors.descriptionColor,
+          iconBackgroundColor:
+            item.designSettings?.iconBackgroundColor ??
+            globalColors.iconBackgroundColor,
+          iconColor: item.designSettings?.iconColor ?? globalColors.iconColor,
+          slideSpeed:
+            item.designSettings?.slideSpeed ?? globalColors.slideSpeed,
+          itemBorderRightColor:
+            item.designSettings?.itemBorderRightColor ??
+            globalColors.itemBorderRightColor,
+        };
+
+        const updatedItem = {
+          ...item.toObject(),
+          designSettings: mergedDesignSettings,
+        };
+        return updatedItem;
+      });
     }
 
     return res
       .status(StatusCode.OK)
       .json(
-        new ApiResponse(true, "USP Bar retrieved successfully.", uspSlider),
+        new ApiResponse(true, "USP Bar retrieved successfully.", finalResponse),
       );
   },
 );
