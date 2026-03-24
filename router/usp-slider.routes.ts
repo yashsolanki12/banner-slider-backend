@@ -15,6 +15,9 @@ import {
   setGlobalColorSettings,
   getGlobalColorSettings,
   deleteGlobalColorSettings,
+  duplicateUspBar,
+  bulkDeleteUspSlider,
+  bulkToggleUspSlider,
 } from "../controller/usp-slider.js";
 import { validate } from "../middleware/validate.js";
 import { validateShopifyHeader } from "../middleware/auth.js";
@@ -69,5 +72,12 @@ router.put("/:id", validate(uspSliderSchema), updateUspSliderById);
 
 // Delete
 router.delete("/:id", deleteUspSliderById);
+
+// Duplicate Usp Bar
+router.post("/duplicate/:id", duplicateUspBar);
+
+// Bulk operations
+router.post("/bulk-delete", bulkDeleteUspSlider);
+router.post("/bulk-toggle", bulkToggleUspSlider);
 
 export default router;
