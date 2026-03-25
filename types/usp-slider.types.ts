@@ -19,4 +19,5 @@ export interface UspSliderDocument extends Document {
   useCustomColorSettings: boolean;
   enabled: boolean;
   icon?: string; // Base64 encoded icon or image URL
+  page_display?: string[];
 }
