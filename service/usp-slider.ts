@@ -22,7 +22,7 @@ const defaultDesignSettings: DesignSettings = {
 export const createUsp = async (
   data: Pick<
     UspSliderDocument,
-    "title" | "description" | "shopify_session_id" | "icon"
+    "title" | "description" | "shopify_session_id" | "icon" | "page_display"
   > & {
     designSettings?: Partial<DesignSettings>;
     enabled?: boolean;
@@ -77,6 +77,7 @@ export const createUsp = async (
     icon: data.icon,
     useCustomColorSettings: data.useCustomColorSettings ?? false,
     designSettings: finalDesignSettings,
+    page_display: data.page_display,
   });
 };
 
@@ -111,7 +112,10 @@ export const getUspById = async (
 // Update
 export const updateUspById = async (
   id: string,
-  data: Pick<UspSliderDocument, "title" | "description" | "icon"> & {
+  data: Pick<
+    UspSliderDocument,
+    "title" | "description" | "icon" | "page_display"
+  > & {
     designSettings?: Partial<DesignSettings>;
     enabled?: boolean;
     useCustomColorSettings?: boolean;
@@ -120,6 +124,7 @@ export const updateUspById = async (
   const updateData: any = {
     title: data.title,
     description: data.description,
+    // pageDisplay: data.pageDisplay,
   };
 
   if (data.icon !== undefined) {
@@ -136,6 +141,10 @@ export const updateUspById = async (
 
   if (data.useCustomColorSettings !== undefined) {
     updateData.useCustomColorSettings = data.useCustomColorSettings;
+  }
+
+  if (data.page_display) {
+    updateData.page_display = data.page_display;
   }
 
   return await UspSlider.findByIdAndUpdate(id, updateData, { new: true });

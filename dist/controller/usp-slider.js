@@ -26,7 +26,7 @@ export const getCurrentShopifySessionId = asyncHandler(async (req, res) => {
 });
 // Create
 export const createUspSlider = asyncHandler(async (req, res) => {
-    const { title, description, shopify_session_id, designSettings, icon, useCustomColorSettings, } = req.body;
+    const { title, description, shopify_session_id, designSettings, icon, useCustomColorSettings, page_display, } = req.body;
     if (!title || !shopify_session_id) {
         throw new AppError("Title, shopify_session_id are required.", StatusCode.BAD_REQUEST);
     }
@@ -81,6 +81,7 @@ export const createUspSlider = asyncHandler(async (req, res) => {
         designSettings,
         icon,
         useCustomColorSettings,
+        page_display,
     });
     if (!response) {
         throw new AppError("Failed to create new usp bar.", StatusCode.BAD_REQUEST);
@@ -217,7 +218,7 @@ export const getUspSliderById = asyncHandler(async (req, res) => {
 // Update
 export const updateUspSliderById = asyncHandler(async (req, res) => {
     const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-    const { title, description, designSettings, icon, useCustomColorSettings } = req.body;
+    const { title, description, designSettings, icon, useCustomColorSettings, page_display, } = req.body;
     if (!mongoose.Types.ObjectId.isValid(id)) {
         throw new AppError("Invalid USP Bar ID format.", StatusCode.BAD_REQUEST);
     }
@@ -230,6 +231,7 @@ export const updateUspSliderById = asyncHandler(async (req, res) => {
         designSettings,
         icon,
         useCustomColorSettings,
+        page_display,
     });
     if (!response) {
         throw new AppError("USP Bar not found.", StatusCode.NOT_FOUND);

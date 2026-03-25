@@ -24,6 +24,7 @@ const uspSliderSchema = new Schema<UspSliderDocument>(
       itemBorderRightColor: { type: String, default: "#000000" },
     },
     useCustomColorSettings: { type: Boolean, default: false },
+    page_display: { type: [String], default: ["all"] },
   },
   {
     timestamps: true,
