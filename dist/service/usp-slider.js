@@ -61,6 +61,7 @@ export const createUsp = async (data) => {
         icon: data.icon,
         useCustomColorSettings: data.useCustomColorSettings ?? false,
         designSettings: finalDesignSettings,
+        page_display: data.page_display,
     });
 };
 // Get all usp slider
@@ -86,6 +87,7 @@ export const updateUspById = async (id, data) => {
     const updateData = {
         title: data.title,
         description: data.description,
+        // pageDisplay: data.pageDisplay,
     };
     if (data.icon !== undefined) {
         updateData.icon = data.icon;
@@ -98,6 +100,9 @@ export const updateUspById = async (id, data) => {
     }
     if (data.useCustomColorSettings !== undefined) {
         updateData.useCustomColorSettings = data.useCustomColorSettings;
+    }
+    if (data.page_display) {
+        updateData.page_display = data.page_display;
     }
     return await UspSlider.findByIdAndUpdate(id, updateData, { new: true });
 };

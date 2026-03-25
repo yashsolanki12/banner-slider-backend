@@ -50,6 +50,7 @@ export const createUspSlider = asyncHandler(
       designSettings,
       icon,
       useCustomColorSettings,
+      page_display,
     } = req.body;
 
     if (!title || !shopify_session_id) {
@@ -121,6 +122,7 @@ export const createUspSlider = asyncHandler(
       designSettings,
       icon,
       useCustomColorSettings,
+      page_display,
     });
 
     if (!response) {
@@ -314,8 +316,14 @@ export const getUspSliderById = asyncHandler(
 export const updateUspSliderById = asyncHandler(
   async (req: Request, res: Response) => {
     const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-    const { title, description, designSettings, icon, useCustomColorSettings } =
-      req.body;
+    const {
+      title,
+      description,
+      designSettings,
+      icon,
+      useCustomColorSettings,
+      page_display,
+    } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new AppError("Invalid USP Bar ID format.", StatusCode.BAD_REQUEST);
@@ -331,6 +339,7 @@ export const updateUspSliderById = asyncHandler(
       designSettings,
       icon,
       useCustomColorSettings,
+      page_display,
     });
 
     if (!response) {
@@ -669,6 +678,7 @@ export const uninstallCleanupBackground = async (shop: any) => {
     console.error("❌ Error in uninstallCleanupBackground:", error);
   }
 };
+
 // Uninstall cleanup: set accessToken to null for a shop instead of deleting records
 export const uninstallCleanup = asyncHandler(async (req, res) => {
   const apiKey = req.headers["x-api-key"];
@@ -706,6 +716,7 @@ export const uninstallCleanup = asyncHandler(async (req, res) => {
       ),
     );
 });
+
 // Public API for storefront theme - get USP bar data by shop domain
 export const getPublicUspSlider = asyncHandler(async (req, res) => {
   const shopParam = Array.isArray(req.params.shop)
@@ -875,6 +886,7 @@ export const getPublicUspSlider = asyncHandler(async (req, res) => {
       new ApiResponse(true, "USP Bar retrieved successfully.", finalResponse),
     );
 });
+
 // Set global color settings
 export const setGlobalColorSettings = asyncHandler(async (req, res) => {
   const shopDomain = res.req.headers["x-shopify-shop-domain"];
@@ -1019,6 +1031,7 @@ export const getGlobalColorSettings = asyncHandler(async (_req, res) => {
       ),
     );
 });
+
 // Delete global color settings
 export const deleteGlobalColorSettings = asyncHandler(async (_req, res) => {
   const shopDomain = res.req.headers["x-shopify-shop-domain"];
