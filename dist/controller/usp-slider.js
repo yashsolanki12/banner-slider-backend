@@ -518,7 +518,7 @@ export const getPublicUspSlider = asyncHandler(async (req, res) => {
     const currentMonth = new Date().toISOString().slice(0, 7); // "YYYY-MM"
     const StoreMetrics = (await import("../models/store-metrics.js")).default;
     let metrics = await StoreMetrics.findOne({ shop });
-    const increment = Math.floor(Math.random() * 8) + 1;
+    const increment = Math.floor(Math.random() * 8) + 1; // plan view number
     if (!metrics) {
         metrics = new StoreMetrics({
             shop,
@@ -547,9 +547,14 @@ export const getPublicUspSlider = asyncHandler(async (req, res) => {
     }
     if (viewLimit !== -1 && metrics.viewsCount > viewLimit) {
         console.log(`❌ View limit exceeded for shop ${shop}. Limit: ${viewLimit}, Views: ${metrics.viewsCount}`);
+        // Get the USP bar data even when limit exceeded so frontend can display it with a warning
+        const response = await uspSliderService.getAllUsp({
+            shopify_session_id: sessionDoc._id,
+            enabled: true,
+        });
         return res
             .status(StatusCode.OK)
-            .json(new ApiResponse(true, "Monthly view limit exceeded.", []));
+            .json(new ApiResponse(true, "Monthly view limit exceeded.", response || []));
     }
     // ----------------------------------------
     // Get all enabled USP bar items for this shop
