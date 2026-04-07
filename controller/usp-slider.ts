@@ -123,6 +123,7 @@ export const createUspSlider = asyncHandler(
       icon,
       useCustomColorSettings,
       page_display,
+      enabled: true,
     });
 
     if (!response) {
@@ -323,6 +324,7 @@ export const updateUspSliderById = asyncHandler(
       icon,
       useCustomColorSettings,
       page_display,
+      enabled,
     } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -340,6 +342,7 @@ export const updateUspSliderById = asyncHandler(
       icon,
       useCustomColorSettings,
       page_display,
+      enabled,
     });
 
     if (!response) {
