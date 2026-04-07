@@ -554,7 +554,7 @@ export const getPublicUspSlider = asyncHandler(async (req, res) => {
         // });
         return res
             .status(StatusCode.OK)
-            .json(new ApiResponse(true, "Monthly view limit exceeded.", []));
+            .json(new ApiResponse(true, `You have reached the ${viewLimit} monthly view limit for ${metrics.planName} plan. Please upgrade your plan to continue.`, []));
     }
     // ----------------------------------------
     // Get all enabled USP bar items for this shop
