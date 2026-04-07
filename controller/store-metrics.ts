@@ -62,7 +62,7 @@ export const syncStoreMetrics = asyncHandler(
     console.log("metric", metrics);
     if (limit !== -1 && metrics.viewsCount >= limit) {
       throw new AppError(
-        "You have reached the 3,000 monthly view limit for Plan 1. Please upgrade your plan to continue.",
+        `You have reached the ${limit} monthly view limit for ${planName} plan. Please upgrade your plan to continue.`,
         StatusCode.TOO_MANY_REQUESTS,
       );
     }
