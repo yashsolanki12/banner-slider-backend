@@ -520,13 +520,34 @@ export const getPublicUspSlider = asyncHandler(async (req, res) => {
     const currentMonth = new Date().toISOString().slice(0, 7); // "YYYY-MM"
     const StoreMetrics = (await import("../models/store-metrics.js")).default;
     let metrics = await StoreMetrics.findOne({ shop });
+    // Check if no plan selected (only "No Plan" string)
+    const isNoPlanInitial = !metrics || metrics.planName === "No Plan";
+    if (isNoPlanInitial) {
+        // If no plan, set view_count to 0 and return message
+        if (!metrics) {
+            metrics = new StoreMetrics({
+                shop,
+                viewsCount: 0,
+                lastResetMonth: currentMonth,
+                planName: "No Plan",
+            });
+            await metrics.save();
+        }
+        else {
+            metrics.viewsCount = 0;
+            await metrics.save();
+        }
+        return res
+            .status(StatusCode.OK)
+            .json(new ApiResponse(true, "No active plan selected. Please select a plan to view content.", []));
+    }
     const increment = Math.floor(Math.random() * 8) + 1; // plan view number
     if (!metrics) {
         metrics = new StoreMetrics({
             shop,
             viewsCount: increment,
             lastResetMonth: currentMonth,
-            planName: "Free",
+            planName: "",
         });
         await metrics.save();
     }
