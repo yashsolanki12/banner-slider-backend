@@ -527,16 +527,16 @@ export const getPublicUspSlider = asyncHandler(async (req, res) => {
         if (!metrics) {
             metrics = new StoreMetrics({
                 shop,
-                viewsCount: 0,
+                // viewsCount: 0,
                 lastResetMonth: currentMonth,
                 planName: "No Plan",
             });
             await metrics.save();
         }
-        else {
-            metrics.viewsCount = 0;
-            await metrics.save();
-        }
+        // else {
+        //   metrics.viewsCount = 0;
+        //   await metrics.save();
+        // }
         return res
             .status(StatusCode.OK)
             .json(new ApiResponse(true, "No active plan selected. Please select a plan to view content.", []));
