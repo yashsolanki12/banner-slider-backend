@@ -676,7 +676,7 @@ export const setGlobalColorSettings = asyncHandler(async (req, res) => {
     if (!sessionDoc || !sessionDoc._id) {
         throw new AppError("Session not found.", StatusCode.NOT_FOUND);
     }
-    const { backgroundColor, titleColor, descriptionColor, iconBackgroundColor, iconColor, itemBorderRightColor, itemBackgroundColor, slideSpeed, } = req.body;
+    const { backgroundColor, titleColor, descriptionColor, iconBackgroundColor, iconColor, itemBorderRightColor, itemBackgroundColor, slideSpeed, paddingTop, paddingRight, paddingBottom, paddingLeft, } = req.body;
     const colors = {
         backgroundColor,
         titleColor,
@@ -686,6 +686,10 @@ export const setGlobalColorSettings = asyncHandler(async (req, res) => {
         itemBorderRightColor,
         itemBackgroundColor,
         slideSpeed,
+        paddingTop,
+        paddingRight,
+        paddingBottom,
+        paddingLeft,
     };
     // Filter out undefined values
     const filteredColors = Object.fromEntries(Object.entries(colors).filter(([_, v]) => v !== undefined));
