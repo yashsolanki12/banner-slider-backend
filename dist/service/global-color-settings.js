@@ -10,6 +10,10 @@ const DEFAULT_COLOR_SETTINGS = {
     itemBorderRightColor: "#000000",
     itemBackgroundColor: "#ffffff",
     slideSpeed: 4,
+    paddingTop: 1,
+    paddingRight: 1,
+    paddingBottom: 1,
+    paddingLeft: 1,
 };
 // Get default color settings
 export const getDefaultColorSettings = () => {
@@ -49,6 +53,10 @@ export const getGlobalColorsPlain = async (shopify_session_id) => {
         iconBackgroundColor: settings.iconBackgroundColor,
         iconColor: settings.iconColor,
         slideSpeed: settings.slideSpeed,
+        paddingTop: settings.paddingTop,
+        paddingRight: settings.paddingRight,
+        paddingBottom: settings.paddingBottom,
+        paddingLeft: settings.paddingLeft,
     };
 };
 //# sourceMappingURL=global-color-settings.js.map

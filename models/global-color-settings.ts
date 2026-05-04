@@ -17,6 +17,10 @@ const globalColorSettingsSchema = new Schema<GlobalColorSettingsDocument>(
     itemBorderRightColor: { type: String, default: "#000000" },
     itemBackgroundColor: { type: String, default: "#ffffff" },
     slideSpeed: { type: Number, default: 4 },
+    paddingTop: { type: Number, default: 1 },
+    paddingRight: { type: Number, default: 1 },
+    paddingBottom: { type: Number, default: 1 },
+    paddingLeft: { type: Number, default: 1 },
   },
   {
     timestamps: true,
