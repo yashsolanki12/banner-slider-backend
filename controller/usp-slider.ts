@@ -954,6 +954,10 @@ export const setGlobalColorSettings = asyncHandler(async (req, res) => {
     itemBorderRightColor,
     itemBackgroundColor,
     slideSpeed,
+    paddingTop,
+    paddingRight,
+    paddingBottom,
+    paddingLeft,
   } = req.body;
   const colors = {
     backgroundColor,
@@ -964,6 +968,10 @@ export const setGlobalColorSettings = asyncHandler(async (req, res) => {
     itemBorderRightColor,
     itemBackgroundColor,
     slideSpeed,
+    paddingTop,
+    paddingRight,
+    paddingBottom,
+    paddingLeft,
   };
   // Filter out undefined values
   const filteredColors = Object.fromEntries(
