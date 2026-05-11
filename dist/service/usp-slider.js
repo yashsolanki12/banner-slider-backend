@@ -11,13 +11,21 @@ const defaultDesignSettings = {
     iconColor: "#0e0e0e",
     slideSpeed: 4,
     itemBorderRightColor: "#000000", // Default vertical border color (black)
+    paddingTop: "0px",
+    paddingRight: "0px",
+    paddingBottom: "0px",
+    paddingLeft: "0px",
+};
+// Helper to normalize padding to string with px
+const normalizePadding = (value) => {
+    if (value === undefined || value === null)
+        return "0px";
+    if (typeof value === 'string' && value.endsWith('px'))
+        return value;
+    return `${value}px`;
 };
 // Create new usp slider
 export const createUsp = async (data) => {
-    // Determine which color settings to use:
-    // - If useCustomColorSettings is true: use provided designSettings or default
-    // - If useCustomColorSettings is false/undefined AND global colors exist: use global colors
-    // - Otherwise: use default colors
     let finalDesignSettings;
     if (data.useCustomColorSettings === true) {
         // User wants custom colors - use provided settings or defaults
@@ -30,7 +38,6 @@ export const createUsp = async (data) => {
         // User didn't check custom color settings - check for global colors first
         try {
             const globalColors = await getGlobalColorsPlain(data.shopify_session_id.toString());
-            // Use global colors as base (they include defaults if no global settings exist)
             finalDesignSettings = {
                 ...defaultDesignSettings,
                 ...globalColors,
@@ -38,7 +45,6 @@ export const createUsp = async (data) => {
             };
         }
         catch (error) {
-            // If error fetching global colors, fall back to defaults
             console.error("Error fetching global colors, using defaults:", error);
             finalDesignSettings = {
                 ...defaultDesignSettings,
@@ -52,6 +58,21 @@ export const createUsp = async (data) => {
             ...defaultDesignSettings,
             ...data.designSettings,
         };
+    }
+    // Normalize padding values if they were provided (as numbers) in designSettings
+    if (data.designSettings) {
+        if (data.designSettings.paddingTop !== undefined) {
+            finalDesignSettings.paddingTop = normalizePadding(data.designSettings.paddingTop);
+        }
+        if (data.designSettings.paddingRight !== undefined) {
+            finalDesignSettings.paddingRight = normalizePadding(data.designSettings.paddingRight);
+        }
+        if (data.designSettings.paddingBottom !== undefined) {
+            finalDesignSettings.paddingBottom = normalizePadding(data.designSettings.paddingBottom);
+        }
+        if (data.designSettings.paddingLeft !== undefined) {
+            finalDesignSettings.paddingLeft = normalizePadding(data.designSettings.paddingLeft);
+        }
     }
     return await UspSlider.create({
         title: data.title,
@@ -93,7 +114,29 @@ export const updateUspById = async (id, data) => {
         updateData.icon = data.icon;
     }
     if (data.designSettings) {
-        updateData.designSettings = data.designSettings;
+        // Normalize padding values to strings with px
+        const normalizedDesignSettings = { ...data.designSettings };
+        if (data.designSettings.paddingTop !== undefined) {
+            normalizedDesignSettings.paddingTop = typeof data.designSettings.paddingTop === "number"
+                ? `${data.designSettings.paddingTop}px`
+                : data.designSettings.paddingTop;
+        }
+        if (data.designSettings.paddingRight !== undefined) {
+            normalizedDesignSettings.paddingRight = typeof data.designSettings.paddingRight === "number"
+                ? `${data.designSettings.paddingRight}px`
+                : data.designSettings.paddingRight;
+        }
+        if (data.designSettings.paddingBottom !== undefined) {
+            normalizedDesignSettings.paddingBottom = typeof data.designSettings.paddingBottom === "number"
+                ? `${data.designSettings.paddingBottom}px`
+                : data.designSettings.paddingBottom;
+        }
+        if (data.designSettings.paddingLeft !== undefined) {
+            normalizedDesignSettings.paddingLeft = typeof data.designSettings.paddingLeft === "number"
+                ? `${data.designSettings.paddingLeft}px`
+                : data.designSettings.paddingLeft;
+        }
+        updateData.designSettings = normalizedDesignSettings;
     }
     if (data.enabled !== undefined) {
         updateData.enabled = data.enabled;
