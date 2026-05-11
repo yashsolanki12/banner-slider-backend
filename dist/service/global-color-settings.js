@@ -10,10 +10,10 @@ const DEFAULT_COLOR_SETTINGS = {
     itemBorderRightColor: "#000000",
     itemBackgroundColor: "#ffffff",
     slideSpeed: 4,
-    paddingTop: 1,
-    paddingRight: 1,
-    paddingBottom: 1,
-    paddingLeft: 1,
+    paddingTop: "0px",
+    paddingRight: "0px",
+    paddingBottom: "0px",
+    paddingLeft: "0px",
 };
 // Get default color settings
 export const getDefaultColorSettings = () => {

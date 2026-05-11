@@ -12,10 +12,10 @@ const DEFAULT_COLOR_SETTINGS = {
   itemBorderRightColor: "#000000",
   itemBackgroundColor: "#ffffff",
   slideSpeed: 4,
-  paddingTop: 1,
-  paddingRight: 1,
-  paddingBottom: 1,
-  paddingLeft: 1,
+  paddingTop: "0px",
+  paddingRight: "0px",
+  paddingBottom: "0px",
+  paddingLeft: "0px",
 };
 
 // Get default color settings
@@ -35,10 +35,10 @@ export const setGlobalColorSettings = async (
     itemBorderRightColor?: string;
     itemBackgroundColor?: string;
     slideSpeed?: number;
-    paddingTop?: number;
-    paddingRight?: number;
-    paddingBottom?: number;
-    paddingLeft?: number;
+    paddingTop?: string;
+    paddingRight?: string;
+    paddingBottom?: string;
+    paddingLeft?: string;
   },
 ): Promise<GlobalColorSettingsDocument> => {
   const sessionId = new mongoose.Types.ObjectId(shopify_session_id as any);
@@ -82,10 +82,10 @@ export const getGlobalColorsPlain = async (
   itemBorderRightColor?: string;
   itemBackgroundColor?: string;
   slideSpeed?: number;
-  paddingTop?: number;
-  paddingRight?: number;
-  paddingBottom?: number;
-  paddingLeft?: number;
+  paddingTop?: string;
+  paddingRight?: string;
+  paddingBottom?: string;
+  paddingLeft?: string;
 }> => {
   const settings = await getGlobalColorSettings(shopify_session_id);
 

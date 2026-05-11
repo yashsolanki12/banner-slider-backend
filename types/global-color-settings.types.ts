@@ -10,10 +10,10 @@ export interface GlobalColorSettingsDocument extends Document {
   itemBorderRightColor: string;
   itemBackgroundColor: string;
   slideSpeed: number;
-  paddingTop: number;
-  paddingRight: number;
-  paddingBottom: number;
-  paddingLeft: number;
+  paddingTop: string;
+  paddingRight: string;
+  paddingBottom: string;
+  paddingLeft: string;
   createdAt: Date;
   updatedAt: Date;
 }
