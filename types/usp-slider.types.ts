@@ -9,6 +9,10 @@ export interface DesignSettings {
   iconColor: string;
   slideSpeed: number;
   itemBorderRightColor: string; // Color for vertical border between items
+  paddingTop: string;
+  paddingRight: string;
+  paddingBottom: string;
+  paddingLeft: string;
 }
 
 export interface UspSliderDocument extends Document {

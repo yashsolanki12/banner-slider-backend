@@ -139,6 +139,10 @@ export const getAllUspSlider = asyncHandler(async (_req, res) => {
                 slideSpeed: item.designSettings?.slideSpeed ?? globalColors.slideSpeed,
                 itemBorderRightColor: item.designSettings?.itemBorderRightColor ??
                     globalColors.itemBorderRightColor,
+                paddingTop: item.designSettings?.paddingTop ?? globalColors.paddingTop,
+                paddingRight: item.designSettings?.paddingRight ?? globalColors.paddingRight,
+                paddingBottom: item.designSettings?.paddingBottom ?? globalColors.paddingBottom,
+                paddingLeft: item.designSettings?.paddingLeft ?? globalColors.paddingLeft,
             };
             const updatedItem = {
                 ...item.toObject(),
@@ -200,6 +204,13 @@ export const getUspSliderById = asyncHandler(async (req, res) => {
                         slideSpeed: response.designSettings?.slideSpeed ?? globalColors.slideSpeed,
                         itemBorderRightColor: response.designSettings?.itemBorderRightColor ??
                             globalColors.itemBorderRightColor,
+                        paddingTop: response.designSettings?.paddingTop ?? globalColors.paddingTop,
+                        paddingRight: response.designSettings?.paddingRight ??
+                            globalColors.paddingRight,
+                        paddingBottom: response.designSettings?.paddingBottom ??
+                            globalColors.paddingBottom,
+                        paddingLeft: response.designSettings?.paddingLeft ??
+                            globalColors.paddingLeft,
                     },
                 };
             }
@@ -650,6 +661,10 @@ export const getPublicUspSlider = asyncHandler(async (req, res) => {
                 slideSpeed: item.designSettings?.slideSpeed ?? globalColors.slideSpeed,
                 itemBorderRightColor: item.designSettings?.itemBorderRightColor ??
                     globalColors.itemBorderRightColor,
+                paddingTop: item.designSettings?.paddingTop ?? globalColors.paddingTop,
+                paddingRight: item.designSettings?.paddingRight ?? globalColors.paddingRight,
+                paddingBottom: item.designSettings?.paddingBottom ?? globalColors.paddingBottom,
+                paddingLeft: item.designSettings?.paddingLeft ?? globalColors.paddingLeft,
             };
             const updatedItem = {
                 ...item.toObject(),
@@ -677,6 +692,14 @@ export const setGlobalColorSettings = asyncHandler(async (req, res) => {
         throw new AppError("Session not found.", StatusCode.NOT_FOUND);
     }
     const { backgroundColor, titleColor, descriptionColor, iconBackgroundColor, iconColor, itemBorderRightColor, itemBackgroundColor, slideSpeed, paddingTop, paddingRight, paddingBottom, paddingLeft, } = req.body;
+    // Convert numeric padding values to "px" strings
+    const convertPadding = (value) => {
+        if (value === undefined || value === null)
+            return undefined;
+        if (typeof value === "string" && value.endsWith("px"))
+            return value;
+        return `${value}px`;
+    };
     const colors = {
         backgroundColor,
         titleColor,
@@ -686,10 +709,10 @@ export const setGlobalColorSettings = asyncHandler(async (req, res) => {
         itemBorderRightColor,
         itemBackgroundColor,
         slideSpeed,
-        paddingTop,
-        paddingRight,
-        paddingBottom,
-        paddingLeft,
+        paddingTop: convertPadding(paddingTop),
+        paddingRight: convertPadding(paddingRight),
+        paddingBottom: convertPadding(paddingBottom),
+        paddingLeft: convertPadding(paddingLeft),
     };
     // Filter out undefined values
     const filteredColors = Object.fromEntries(Object.entries(colors).filter(([_, v]) => v !== undefined));
@@ -725,6 +748,19 @@ export const setGlobalColorSettings = asyncHandler(async (req, res) => {
     }
     if (slideSpeed !== undefined) {
         updateFields["designSettings.slideSpeed"] = slideSpeed;
+    }
+    // Use converted padding values
+    if (colors.paddingTop !== undefined) {
+        updateFields["designSettings.paddingTop"] = colors.paddingTop;
+    }
+    if (colors.paddingRight !== undefined) {
+        updateFields["designSettings.paddingRight"] = colors.paddingRight;
+    }
+    if (colors.paddingBottom !== undefined) {
+        updateFields["designSettings.paddingBottom"] = colors.paddingBottom;
+    }
+    if (colors.paddingLeft !== undefined) {
+        updateFields["designSettings.paddingLeft"] = colors.paddingLeft;
     }
     // Only run updateMany if there are fields to update
     if (Object.keys(updateFields).length > 0) {
