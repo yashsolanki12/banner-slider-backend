@@ -2,11 +2,12 @@ import { StatusCode } from "../utils/status-code.js";
 import { ApiResponse } from "../utils/api-response.js";
 import { asyncHandler } from "../utils/async-handler.js";
 import { AppError } from "../utils/app-error.js";
-import * as uspSliderService from "../service/usp-slider.js";
-import * as globalColorSettingsService from "../service/global-color-settings.js";
+import { UspSlider } from "../models/usp-slider.js";
 import mongoose from "mongoose";
 import shopifySession from "../models/shopify-session.js";
-import { UspSlider } from "../models/usp-slider.js";
+import * as uspSliderService from "../service/usp-slider.js";
+import * as globalColorSettingsService from "../service/global-color-settings.js";
+import * as storeMetricsService from "../service/store-metrics.js";
 // Get current shopify_session_id
 export const getCurrentShopifySessionId = asyncHandler(async (req, res) => {
     const shopDomain = req.headers["x-shopify-shop-domain"];
@@ -30,50 +31,84 @@ export const createUspSlider = asyncHandler(async (req, res) => {
     if (!title || !shopify_session_id) {
         throw new AppError("Title, shopify_session_id are required.", StatusCode.BAD_REQUEST);
     }
-    // Free Plan Limit Validation (Max 10)
-    const count = await UspSlider.countDocuments({ shopify_session_id });
-    if (count >= 10) {
-        let isPaid = false;
-        try {
-            const sessionDoc = await mongoose.connection
-                .collection("shopify_sessions")
-                .findOne({ _id: new mongoose.Types.ObjectId(shopify_session_id) });
-            if (sessionDoc && sessionDoc.shop && sessionDoc.accessToken) {
-                const graphqlQuery = `
-            query {
-              app {
-                installation {
-                  activeSubscriptions {
-                    status
-                  }
-                }
-              }
-            }
-          `;
-                const graphqlResponse = await fetch(`https://${sessionDoc.shop}/admin/api/2026-04/graphql.json`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-Shopify-Access-Token": sessionDoc.accessToken,
-                    },
-                    body: JSON.stringify({ query: graphqlQuery }),
-                });
-                if (graphqlResponse.ok) {
-                    const data = await graphqlResponse.json();
-                    const subscriptions = data?.data?.app?.installation?.activeSubscriptions || [];
-                    if (subscriptions.some((sub) => sub.status === "ACTIVE")) {
-                        isPaid = true;
-                    }
-                }
-            }
-        }
-        catch (error) {
-            console.error("Error checking subscription limit:", error);
-        }
-        if (!isPaid) {
-            throw new AppError("Limit of 10 USP Bars reached for the Free plan. Please upgrade to a paid plan to create more.", StatusCode.FORBIDDEN);
-        }
+    // Get shop domain header
+    const shopDomain = res.req.headers["x-shopify-shop-domain"];
+    console.log("📱 Get all usp slider - Shop Domain", shopDomain);
+    if (!shopDomain) {
+        throw new AppError("Missing shop domain header.", StatusCode.BAD_REQUEST);
     }
+    // Find the session for this shop
+    const sessionDoc = await mongoose.connection
+        .collection("shopify_sessions")
+        .findOne({ shop: shopDomain });
+    console.log("Session found for all USP Bar 🔎", sessionDoc ? "Yes" : "No");
+    if (!sessionDoc || !sessionDoc._id) {
+        throw new AppError("Session not found.", StatusCode.NOT_FOUND);
+    }
+    const syncMetricsPlan = await storeMetricsService.getStorePlan(shopDomain);
+    const listResponse = await uspSliderService.getAllUsp({
+        shopify_session_id: sessionDoc._id,
+    });
+    const listApiLength = listResponse.map((i) => i).length;
+    if (syncMetricsPlan?.planName === "Free" && listApiLength >= 3) {
+        throw new AppError(`Maximum limit of 3 data entries reached for the '${syncMetricsPlan?.planName}' plan.`, StatusCode.FORBIDDEN);
+    }
+    else if (syncMetricsPlan?.planName === "Plan 1" && listApiLength >= 6) {
+        throw new AppError(`Maximum limit of 6 data entries reached for the '${syncMetricsPlan?.planName}' plan`, StatusCode.FORBIDDEN);
+    }
+    else if (syncMetricsPlan?.planName === "Plan 2" && listApiLength >= 10) {
+        throw new AppError(`Maximum limit of 10 data entries reached for that '${syncMetricsPlan?.planName}' plan`, StatusCode.FORBIDDEN);
+    }
+    // Free Plan Limit Validation (Max 10)
+    // const count = await UspSlider.countDocuments({ shopify_session_id });
+    // if (count >= 10) {
+    //   let isPaid = false;
+    //   try {
+    //     const sessionDoc = await mongoose.connection
+    //       .collection("shopify_sessions")
+    //       .findOne({ _id: new mongoose.Types.ObjectId(shopify_session_id) });
+    //     if (sessionDoc && sessionDoc.shop && sessionDoc.accessToken) {
+    //       const graphqlQuery = `
+    //         query {
+    //           app {
+    //             installation {
+    //               activeSubscriptions {
+    //                 status
+    //               }
+    //             }
+    //           }
+    //         }
+    //       `;
+    //       const graphqlResponse = await fetch(
+    //         `https://${sessionDoc.shop}/admin/api/2026-04/graphql.json`,
+    //         {
+    //           method: "POST",
+    //           headers: {
+    //             "Content-Type": "application/json",
+    //             "X-Shopify-Access-Token": sessionDoc.accessToken,
+    //           },
+    //           body: JSON.stringify({ query: graphqlQuery }),
+    //         },
+    //       );
+    //       if (graphqlResponse.ok) {
+    //         const data: any = await graphqlResponse.json();
+    //         const subscriptions =
+    //           data?.data?.app?.installation?.activeSubscriptions || [];
+    //         if (subscriptions.some((sub: any) => sub.status === "ACTIVE")) {
+    //           isPaid = true;
+    //         }
+    //       }
+    //     }
+    //   } catch (error) {
+    //     console.error("Error checking subscription limit:", error);
+    //   }
+    //   if (!isPaid) {
+    //     throw new AppError(
+    //       "Limit of 10 USP Bars reached for the Free plan. Please upgrade to a paid plan to create more.",
+    //       StatusCode.FORBIDDEN,
+    //     );
+    //   }
+    // }
     const response = await uspSliderService.createUsp({
         title,
         description,
@@ -328,6 +363,17 @@ export const duplicateUspBar = asyncHandler(async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(id)) {
         throw new AppError("Invalid USP Bar ID format.", StatusCode.BAD_REQUEST);
     }
+    // Get shop domain header
+    const shopDomain = res.req.headers["x-shopify-shop-domain"];
+    console.log("📱 Get all usp slider - Shop Domain", shopDomain);
+    if (!shopDomain) {
+        throw new AppError("Missing shop domain header.", StatusCode.BAD_REQUEST);
+    }
+    // Find the session for this shop
+    const sessionDoc = await mongoose.connection
+        .collection("shopify_sessions")
+        .findOne({ shop: shopDomain });
+    console.log("Session found for all USP Bar 🔎", sessionDoc ? "Yes" : "No");
     const originalItem = await uspSliderService.getUspById(id);
     if (!originalItem) {
         throw new AppError("Usp bar not found.", StatusCode.BAD_REQUEST);
@@ -339,6 +385,20 @@ export const duplicateUspBar = asyncHandler(async (req, res) => {
         throw new AppError("Shopify session ID not found.", StatusCode.BAD_REQUEST);
     }
     const shopify_session_id = originalItem.shopify_session_id.toString();
+    const syncMetricsPlan = await storeMetricsService.getStorePlan(shopDomain);
+    const listResponse = await uspSliderService.getAllUsp({
+        shopify_session_id: sessionDoc?._id,
+    });
+    const listApiLength = listResponse.map((i) => i).length;
+    if (syncMetricsPlan?.planName === "Free" && listApiLength >= 3) {
+        throw new AppError(`Maximum limit of 3 data entries reached for the '${syncMetricsPlan?.planName}' plan.`, StatusCode.FORBIDDEN);
+    }
+    else if (syncMetricsPlan?.planName === "Plan 1" && listApiLength >= 6) {
+        throw new AppError(`Maximum limit of 6 data entries reached for the '${syncMetricsPlan?.planName}' plan`, StatusCode.FORBIDDEN);
+    }
+    else if (syncMetricsPlan?.planName === "Plan 2" && listApiLength >= 10) {
+        throw new AppError(`Maximum limit of 10 data entries reached for that '${syncMetricsPlan?.planName}' plan`, StatusCode.FORBIDDEN);
+    }
     // Limit check - block duplicates if already at 10 or more bars (for ALL users)
     const count = await UspSlider.countDocuments({
         shopify_session_id: new mongoose.Types.ObjectId(shopify_session_id),

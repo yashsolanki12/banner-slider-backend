@@ -1,8 +1,12 @@
 import express from "express";
-import { syncStoreMetrics } from "../controller/store-metrics.js";
+import { getSyncStoreMetrics, syncStoreMetrics } from "../controller/store-metrics.js";
 
 const storeMetricsRouter = express.Router();
 
+// Create a new plan
 storeMetricsRouter.post("/sync", syncStoreMetrics);
+
+// Get current plan
+storeMetricsRouter.get("/sync-metrics/:shop", getSyncStoreMetrics);
 
 export default storeMetricsRouter;

@@ -3,6 +3,8 @@ import { AppError } from "../utils/app-error.js";
 import { StatusCode } from "../utils/status-code.js";
 import { ApiResponse } from "../utils/api-response.js";
 import StoreMetrics from "../models/store-metrics.js";
+import mongoose from "mongoose";
+import * as storeMetricsService from "../service/store-metrics.js";
 // Fetch or Update Store Metrics
 export const syncStoreMetrics = asyncHandler(async (req, res) => {
     const { shop, planName } = req.body;
@@ -40,7 +42,7 @@ export const syncStoreMetrics = asyncHandler(async (req, res) => {
     // Calculate limit based on plan name
     let limit = 1000;
     if (metrics.planName.toLowerCase().includes("plan 1")) {
-        limit = 3000;
+        limit = 2500;
     }
     else if (metrics.planName.toLowerCase().includes("plan 2")) {
         limit = -1; // Unlimited
@@ -48,7 +50,6 @@ export const syncStoreMetrics = asyncHandler(async (req, res) => {
     else {
         limit = 1000;
     }
-    console.log("metric", metrics);
     if (limit !== -1 && metrics.viewsCount >= limit) {
         throw new AppError(`You have reached the ${limit} monthly view limit for ${planName} plan. Please upgrade your plan to continue.`, StatusCode.TOO_MANY_REQUESTS);
     }
@@ -59,5 +60,37 @@ export const syncStoreMetrics = asyncHandler(async (req, res) => {
         planName: metrics.planName,
         limit,
     }));
+});
+// Get current plan
+export const getSyncStoreMetrics = asyncHandler(async (_req, res, next) => {
+    try {
+        // Get shop domain header
+        const shopDomain = res.req.headers["x-shopify-shop-domain"];
+        if (!shopDomain) {
+            throw new AppError("Missing shop domain header.", StatusCode.BAD_REQUEST);
+        }
+        // Find the session for this shop
+        const sessionDoc = await mongoose.connection
+            .collection("shopify_sessions")
+            .findOne({ shop: shopDomain });
+        console.log("Session found for all USP Bar 🔎", sessionDoc ? "Yes" : "No");
+        if (!sessionDoc || !sessionDoc._id) {
+            throw new AppError("Session not found.", StatusCode.NOT_FOUND);
+        }
+        const getSyncData = await storeMetricsService.getStorePlan(shopDomain);
+        if (!getSyncData) {
+            return res
+                .status(StatusCode.NOT_FOUND)
+                .json(new ApiResponse(false, "No store metrics found."));
+        }
+        if (getSyncData) {
+            return res
+                .status(StatusCode.OK)
+                .json(new ApiResponse(true, "Sync store metrics fetched successfully", getSyncData));
+        }
+    }
+    catch (error) {
+        next(error);
+    }
 });
 //# sourceMappingURL=store-metrics.js.map
