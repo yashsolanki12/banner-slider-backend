@@ -1,5 +1,5 @@
-import { UspSliderDocument } from "../types/usp-slider.types";
 import { Schema, model } from "mongoose";
+import { UspSliderDocument } from "../types/usp-slider.types";
 
 const uspSliderSchema = new Schema<UspSliderDocument>(
   {
