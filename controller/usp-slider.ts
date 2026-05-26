@@ -89,12 +89,12 @@ export const createUspSlider = asyncHandler(
         `Maximum limit of 3 data entries reached for the '${syncMetricsPlan?.planName}' plan.`,
         StatusCode.FORBIDDEN,
       );
-    } else if (syncMetricsPlan?.planName === "Plan 1" && listApiLength >= 6) {
+    } else if (syncMetricsPlan?.planName === "Starter" && listApiLength >= 6) {
       throw new AppError(
         `Maximum limit of 6 data entries reached for the '${syncMetricsPlan?.planName}' plan`,
         StatusCode.FORBIDDEN,
       );
-    } else if (syncMetricsPlan?.planName === "Plan 2" && listApiLength >= 10) {
+    } else if (syncMetricsPlan?.planName === "Essential" && listApiLength >= 10) {
       throw new AppError(
         `Maximum limit of 10 data entries reached for that '${syncMetricsPlan?.planName}' plan`,
         StatusCode.FORBIDDEN,
@@ -600,12 +600,12 @@ export const duplicateUspBar = asyncHandler(
         `Maximum limit of 3 data entries reached for the '${syncMetricsPlan?.planName}' plan.`,
         StatusCode.FORBIDDEN,
       );
-    } else if (syncMetricsPlan?.planName === "Plan 1" && listApiLength >= 6) {
+    } else if (syncMetricsPlan?.planName === "Starter" && listApiLength >= 6) {
       throw new AppError(
         `Maximum limit of 6 data entries reached for the '${syncMetricsPlan?.planName}' plan`,
         StatusCode.FORBIDDEN,
       );
-    } else if (syncMetricsPlan?.planName === "Plan 2" && listApiLength >= 10) {
+    } else if (syncMetricsPlan?.planName === "Essential" && listApiLength >= 10) {
       throw new AppError(
         `Maximum limit of 10 data entries reached for that '${syncMetricsPlan?.planName}' plan`,
         StatusCode.FORBIDDEN,
@@ -911,9 +911,9 @@ export const getPublicUspSlider = asyncHandler(async (req, res) => {
     await metrics.save();
   }
   let viewLimit = 1000;
-  if (metrics.planName.toLowerCase().includes("plan 1")) {
-    viewLimit = 3000;
-  } else if (metrics.planName.toLowerCase().includes("plan 2")) {
+  if (metrics.planName.toLowerCase().includes("starter")) {
+    viewLimit = 2500;
+  } else if (metrics.planName.toLowerCase().includes("essential")) {
     viewLimit = -1; // unlimited
   }
   if (viewLimit !== -1 && metrics.viewsCount > viewLimit) {
