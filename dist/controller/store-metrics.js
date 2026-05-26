@@ -41,10 +41,10 @@ export const syncStoreMetrics = asyncHandler(async (req, res) => {
     }
     // Calculate limit based on plan name
     let limit = 1000;
-    if (metrics.planName.toLowerCase().includes("plan 1")) {
+    if (metrics.planName.toLowerCase().includes("starter")) {
         limit = 2500;
     }
-    else if (metrics.planName.toLowerCase().includes("plan 2")) {
+    else if (metrics.planName.toLowerCase().includes("essential")) {
         limit = -1; // Unlimited
     }
     else {
