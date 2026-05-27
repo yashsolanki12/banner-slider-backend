@@ -94,7 +94,10 @@ export const createUspSlider = asyncHandler(
         `Maximum limit of 6 data entries reached for the '${syncMetricsPlan?.planName}' plan`,
         StatusCode.FORBIDDEN,
       );
-    } else if (syncMetricsPlan?.planName === "Essential" && listApiLength >= 10) {
+    } else if (
+      syncMetricsPlan?.planName === "Essential" &&
+      listApiLength >= 10
+    ) {
       throw new AppError(
         `Maximum limit of 10 data entries reached for that '${syncMetricsPlan?.planName}' plan`,
         StatusCode.FORBIDDEN,
@@ -605,7 +608,10 @@ export const duplicateUspBar = asyncHandler(
         `Maximum limit of 6 data entries reached for the '${syncMetricsPlan?.planName}' plan`,
         StatusCode.FORBIDDEN,
       );
-    } else if (syncMetricsPlan?.planName === "Essential" && listApiLength >= 10) {
+    } else if (
+      syncMetricsPlan?.planName === "Essential" &&
+      listApiLength >= 10
+    ) {
       throw new AppError(
         `Maximum limit of 10 data entries reached for that '${syncMetricsPlan?.planName}' plan`,
         StatusCode.FORBIDDEN,
@@ -891,56 +897,61 @@ export const getPublicUspSlider = asyncHandler(async (req, res) => {
         ),
       );
   }
-
-  const increment = Math.floor(Math.random() * 8) + 1; // plan view number
-  if (!metrics) {
-    metrics = new StoreMetrics({
-      shop,
-      viewsCount: increment,
-      lastResetMonth: currentMonth,
-      planName: "",
-    });
-    await metrics.save();
-  } else {
-    if (metrics.lastResetMonth !== currentMonth) {
-      metrics.viewsCount = increment;
-      metrics.lastResetMonth = currentMonth;
-    } else {
-      metrics.viewsCount += increment;
-    }
-    await metrics.save();
-  }
-  let viewLimit = 1000;
-  if (metrics.planName.toLowerCase().includes("starter")) {
-    viewLimit = 2500;
-  } else if (metrics.planName.toLowerCase().includes("essential")) {
-    viewLimit = -1; // unlimited
-  }
-  if (viewLimit !== -1 && metrics.viewsCount > viewLimit) {
-    console.log(
-      `❌ View limit exceeded for shop ${shop}. Limit: ${viewLimit}, Views: ${metrics.viewsCount}`,
-    );
-    // Get the USP bar data even when limit exceeded so frontend can display it with a warning
-    // const response = await uspSliderService.getAllUsp({
-    //   shopify_session_id: sessionDoc._id,
-    //   enabled: true,
-    // });
-    return res
-      .status(StatusCode.OK)
-      .json(
-        new ApiResponse(
-          true,
-          `You have reached the ${viewLimit} monthly view limit for ${metrics.planName} plan. Please upgrade your plan to continue.`,
-          [],
-        ),
-      );
-  }
-  // ----------------------------------------
-  // Get all enabled USP bar items for this shop
   const response = await uspSliderService.getAllUsp({
     shopify_session_id: sessionDoc._id,
     enabled: true,
   });
+  const checkListLength = response.map((i: any) => i).length > 0;
+
+  const increment = Math.floor(Math.random() * 8) + 1; // plan view number
+  if (checkListLength) {
+    if (!metrics) {
+      metrics = new StoreMetrics({
+        shop,
+        viewsCount: increment,
+        lastResetMonth: currentMonth,
+        planName: "",
+      });
+      await metrics.save();
+    } else {
+      if (metrics.lastResetMonth !== currentMonth) {
+        metrics.viewsCount = increment;
+        metrics.lastResetMonth = currentMonth;
+      } else {
+        metrics.viewsCount += increment;
+      }
+      await metrics.save();
+    }
+    let viewLimit = 1000;
+    if (metrics.planName.toLowerCase().includes("starter")) {
+      viewLimit = 2500;
+    } else if (metrics.planName.toLowerCase().includes("essential")) {
+      viewLimit = -1; // unlimited
+    }
+    if (viewLimit !== -1 && metrics.viewsCount > viewLimit) {
+      console.log(
+        `❌ View limit exceeded for shop ${shop}. Limit: ${viewLimit}, Views: ${metrics.viewsCount}`,
+      );
+      // Get the USP bar data even when limit exceeded so frontend can display it with a warning
+      // const response = await uspSliderService.getAllUsp({
+      //   shopify_session_id: sessionDoc._id,
+      //   enabled: true,
+      // });
+      return res
+        .status(StatusCode.OK)
+        .json(
+          new ApiResponse(
+            true,
+            `You have reached the ${viewLimit} monthly view limit for ${metrics.planName} plan. Please upgrade your plan to continue.`,
+            [],
+          ),
+        );
+    }
+  }
+
+  // ----------------------------------------
+  // Get all enabled USP bar items for this shop
+
   console.log("📦 USP Bar items found:", response ? response.length : 0);
   if (!response || response.length === 0) {
     return res
